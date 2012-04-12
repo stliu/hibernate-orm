@@ -13,6 +13,6 @@ after_install : "echo 'after install is running'"
 #   - if [[ "$DB" == "pgsql" ]]; then psql -c "DROP DATABASE IF EXISTS hibernate;" -U postgres; fi
 #   - if [[ "$DB" == "pgsql" ]]; then psql -c "create database hibernate;" -U postgres; fi
 #   - if [[ "$DB" == "mysql" ]]; then mysql -e "create database IF NOT EXISTS hibernate;" -uroot; fi
-script : "./gradlew test --info"
+script : "./gradlew test"
 notifications:
   irc: "irc.freenode.org#hibernate-ci"
