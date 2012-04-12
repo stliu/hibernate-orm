@@ -1,4 +1,5 @@
 language: java
+
 before_install : "echo 'before install is running'"
 # can't install first then run test due to that infinispan test jar issue
 install : "echo 'install is running'" 
