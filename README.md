@@ -1,5 +1,6 @@
 How to build
 ============
+[![Build Status](https://secure.travis-ci.org/stliu/hibernate-orm.png?branch=master)](http://travis-ci.org/stliu/hibernate-orm)
 
 *Starting with development of version 4.0, Hibernate uses Gradle (http://gradle.org) as its build tool.*
 
