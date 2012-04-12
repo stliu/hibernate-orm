@@ -1,6 +1,7 @@
 language: java
 before_install : "echo 'before install is running'"
-install : "./gradlew install"
+# can't install first then run test due to that infinispan test jar issue
+install : "echo 'install is running'" 
 after_install : "echo 'after install is running'"
 
 # optionally specify a list of environments, for example to test different RDBMS
