@@ -1,5 +1,7 @@
 language: java
 install : "./gradlew dependencies"
 script : "./gradlew clean test --info"
+# notifications:
+#     -   irc: "irc.freenode.org#hibernate-ci"
 notifications:
-    -   irc: "irc.freenode.org#hibernate-ci"
+  irc: "irc.freenode.org#hibernate-ci"
