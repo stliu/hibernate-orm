@@ -5,7 +5,7 @@ before_install : "echo 'before install is running'"
 install : "echo 'install is running'" 
 after_install : "echo 'after install is running'"
 
-optionally specify a list of environments, for example to test different RDBMS
+# optionally specify a list of environments, for example to test different RDBMS
 env:
   - DB=mysql51
   - DB=postgresql84
