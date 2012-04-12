@@ -1,7 +1,18 @@
 language: java
-install : "./gradlew dependencies"
+before_install : "echo 'before install is running'"
+install : "echo 'install is running'"
+after_install : "echo 'after install is running'"
+
+# optionally specify a list of environments, for example to test different RDBMS
+# env:
+#   - DB=mysql
+#   - DB=pgsql
+
+# execute any number of scripts before the test run, custom env's are available as variables
+# before_script:
+#   - if [[ "$DB" == "pgsql" ]]; then psql -c "DROP DATABASE IF EXISTS hibernate;" -U postgres; fi
+#   - if [[ "$DB" == "pgsql" ]]; then psql -c "create database hibernate;" -U postgres; fi
+#   - if [[ "$DB" == "mysql" ]]; then mysql -e "create database IF NOT EXISTS hibernate;" -uroot; fi
 script : "./gradlew clean test --info"
-# notifications:
-#     -   irc: "irc.freenode.org#hibernate-ci"
 notifications:
   irc: "irc.freenode.org#hibernate-ci"
