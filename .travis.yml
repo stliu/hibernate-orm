@@ -6,16 +6,17 @@ install : "echo 'install is running'"
 after_install : "echo 'after install is running'"
 
 # optionally specify a list of environments, for example to test different RDBMS
-env:
-  - DB=mysql51
-  - DB=postgresql84
-  - DB=h2
+# env:
+#   - DB=mysql51
+#   - DB=postgresql84
+#   - DB=h2
 
 # execute any number of scripts before the test run, custom env's are available as variables
-before_script:
-  - if [[ "$DB" == "pgsql" ]]; then psql -c "DROP DATABASE IF EXISTS hibernate;" -U postgres; fi
-  - if [[ "$DB" == "pgsql" ]]; then psql -c "create database hibernate;" -U postgres; fi
-  - if [[ "$DB" == "mysql" ]]; then mysql -e "create database IF NOT EXISTS hibernate;" -uroot; fi
-script :  if [[ "$DB" == "h2" ]] ; then ./gradlew test ; else ./gradlew matrix_${DB} ; fi
+# before_script:
+#   - if [[ "$DB" == "pgsql" ]]; then psql -c "DROP DATABASE IF EXISTS hibernate;" -U postgres; fi
+#   - if [[ "$DB" == "pgsql" ]]; then psql -c "create database hibernate;" -U postgres; fi
+#   - if [[ "$DB" == "mysql" ]]; then mysql -e "create database IF NOT EXISTS hibernate;" -uroot; fi
+# script :  if [[ "$DB" == "h2" ]] ; then ./gradlew test ; else ./gradlew matrix_${DB} ; fi
+script :  ./gradlew test
 notifications:
   irc: "irc.freenode.org#hibernate-ci"
