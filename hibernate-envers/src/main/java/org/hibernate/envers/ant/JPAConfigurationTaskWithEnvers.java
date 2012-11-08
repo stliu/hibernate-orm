@@ -31,7 +31,7 @@ import org.hibernate.tool.ant.JPAConfigurationTask;
  */
 public class JPAConfigurationTaskWithEnvers extends JPAConfigurationTask {
     protected void doConfiguration(Configuration configuration) {
-        AuditConfiguration.getFor(configuration);
+//      TODO:  AuditConfiguration.getFor(configuration);
 
         super.doConfiguration(configuration);
     }

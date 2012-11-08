@@ -30,6 +30,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 
 /**
+ * TODO: Remove? Is it replaced by JaxbHibernateMapping?
  * @author Adam Warski (adam at warski dot org)
  */
 public class EntityXmlMappingData {

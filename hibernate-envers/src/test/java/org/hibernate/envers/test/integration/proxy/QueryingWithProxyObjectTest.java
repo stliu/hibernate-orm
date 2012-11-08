@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.hibernate.envers.test.BaseEnversFunctionalTestCase;
 import org.hibernate.envers.test.Priority;
 import org.hibernate.envers.test.entities.StrTestEntity;
+import org.hibernate.envers.test.entities.reventity.CustomDataRevEntity;
 import org.hibernate.testing.FailureExpectedWithNewMetamodel;
 import org.hibernate.testing.TestForIssue;
 
@@ -20,7 +21,7 @@ public class QueryingWithProxyObjectTest extends BaseEnversFunctionalTestCase {
 
     @Override
     protected Class<?>[] getAnnotatedClasses() {
-        return new Class[]{ StrTestEntity.class};
+        return new Class[]{ StrTestEntity.class/*, CustomDataRevEntity.class*/ };
     }
 
     @Test

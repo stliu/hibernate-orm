@@ -22,20 +22,29 @@
  * Boston, MA  02110-1301  USA
  */
 package org.hibernate.envers.test.entities.reventity;
+import java.util.List;
+import java.util.Set;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
+import org.hibernate.envers.ModifiedEntityNames;
 import org.hibernate.envers.RevisionEntity;
+import org.hibernate.envers.RevisionListener;
 import org.hibernate.envers.RevisionNumber;
 import org.hibernate.envers.RevisionTimestamp;
+import org.hibernate.envers.test.integration.reventity.CountingRevisionListener;
 
 /**
  * @author Adam Warski (adam at warski dot org)
  */
-@Entity
+@Entity(name = "asa")
 @GenericGenerator(name = "EnversTestingRevisionGenerator",
                   strategy = "org.hibernate.id.enhanced.TableGenerator",
                   parameters = {@Parameter(name = "table_name", value = "REVISION_GENERATOR"),
@@ -44,7 +53,7 @@ import org.hibernate.envers.RevisionTimestamp;
                                 @Parameter(name = "prefer_entity_table_as_segment_value", value = "true")
                   }
 )
-@RevisionEntity
+@RevisionEntity(CountingRevisionListener.class)
 public class CustomDataRevEntity {
     @Id
     @GeneratedValue(generator = "EnversTestingRevisionGenerator")
@@ -53,6 +62,16 @@ public class CustomDataRevEntity {
 
     @RevisionTimestamp
     private long customTimestamp;
+
+//	@ElementCollection
+////	TODO: Fix the default revision entity: @JoinTable(name = "REVCHANGES", joinColumns = @JoinColumn(name = "REV"))
+//	@Column(name = "ENTITYNAME")
+//	@ModifiedEntityNames
+//	private Set<Integer> names;
+//
+//	public Set<Integer> getNames() {
+//		return names;
+//	}
 
 	private String data;
 

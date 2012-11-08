@@ -41,7 +41,7 @@ public class EnversSchemaGenerator {
 
     private Configuration configureAuditing(Configuration configuration) {
         configuration.buildMappings();
-		AuditConfiguration.getFor(configuration);
+//		AuditConfiguration.getFor(configuration); TODO: FIX ME
         return configuration;
     }
 }

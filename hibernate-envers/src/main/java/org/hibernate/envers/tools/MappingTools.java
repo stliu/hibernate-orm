@@ -3,6 +3,9 @@ import org.hibernate.mapping.Collection;
 import org.hibernate.mapping.OneToMany;
 import org.hibernate.mapping.ToOne;
 import org.hibernate.mapping.Value;
+import org.hibernate.metamodel.spi.binding.AttributeBinding;
+import org.hibernate.metamodel.spi.binding.CompositeAttributeBinding;
+import org.hibernate.metamodel.spi.binding.ManyToOneAttributeBinding;
 
 /**
  * @author Adam Warski (adam at warski dot org)
@@ -36,4 +39,19 @@ public class MappingTools {
 
         return null;
     }
+
+	public static String getReferencedEntityName(AttributeBinding attributeBinding) {
+		if ( attributeBinding instanceof ManyToOneAttributeBinding ) {
+			// TODO: is the above type correct? What about one-to-one mappings?
+			return ( (ManyToOneAttributeBinding) attributeBinding ).getReferencedEntityName();
+		}
+//		TODO: OneToMany mapping?
+//		else if ( attributeBinding instanceof  ) {
+//		}
+		else if ( attributeBinding instanceof CompositeAttributeBinding ) {
+//			TODO: What to return here?
+			return null;
+		}
+		return null;
+	}
 }

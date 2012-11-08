@@ -23,13 +23,13 @@
  */
 package org.hibernate.envers.configuration;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.WeakHashMap;
 
+import org.jboss.jandex.IndexView;
+
 import org.hibernate.MappingException;
-import org.hibernate.annotations.common.reflection.ReflectionManager;
-import org.hibernate.cfg.Configuration;
 import org.hibernate.envers.entities.EntitiesConfigurations;
 import org.hibernate.envers.entities.PropertyData;
 import org.hibernate.envers.revisioninfo.ModifiedEntityNamesReader;
@@ -39,7 +39,8 @@ import org.hibernate.envers.strategy.AuditStrategy;
 import org.hibernate.envers.strategy.ValidityAuditStrategy;
 import org.hibernate.envers.synchronization.AuditProcessManager;
 import org.hibernate.envers.tools.reflection.ReflectionTools;
-import org.hibernate.internal.util.ReflectHelper;
+import org.hibernate.jaxb.spi.JaxbRoot;
+import org.hibernate.metamodel.spi.MetadataImplementor;
 import org.hibernate.property.Getter;
 import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
 
@@ -48,6 +49,7 @@ import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
  * @author Stephanie Pau at Markit Group Plc
  */
 public class AuditConfiguration {
+	private final CoreConfiguration coreConfiguration;
 	private final GlobalConfiguration globalCfg;
 	private final AuditEntitiesConfiguration auditEntCfg;
 	private final AuditProcessManager auditProcessManager;
@@ -57,6 +59,8 @@ public class AuditConfiguration {
 	private final RevisionInfoNumberReader revisionInfoNumberReader;
 	private final ModifiedEntityNamesReader modifiedEntityNamesReader;
 	private final ClassLoaderService classLoaderService;
+	private final JaxbRoot revisionInfoEntityMapping;
+//	TODO: private final List<JaxbRoot> auditEntitiesMapping;
 
 	public AuditEntitiesConfiguration getAuditEntCfg() {
 		return auditEntCfg;
@@ -90,30 +94,29 @@ public class AuditConfiguration {
 		return auditStrategy;
 	}
 
-	public AuditConfiguration(Configuration cfg) {
-		this( cfg, null );
+	public JaxbRoot getRevisionInfoEntityMapping() {
+		return revisionInfoEntityMapping;
 	}
 
-	public AuditConfiguration(Configuration cfg, ClassLoaderService classLoaderService) {
-		Properties properties = cfg.getProperties();
-
-		ReflectionManager reflectionManager = cfg.getReflectionManager();
-		globalCfg = new GlobalConfiguration( properties );
+	public AuditConfiguration(MetadataImplementor metadata, IndexView jandexIndex) {
+		coreConfiguration = new CoreConfiguration( metadata, jandexIndex );
+		globalCfg = new GlobalConfiguration( metadata.getServiceRegistry() );
 		RevisionInfoConfiguration revInfoCfg = new RevisionInfoConfiguration( globalCfg );
-		RevisionInfoConfigurationResult revInfoCfgResult = revInfoCfg.configure( cfg, reflectionManager );
-		auditEntCfg = new AuditEntitiesConfiguration( properties, revInfoCfgResult.getRevisionInfoEntityName() );
+		RevisionInfoConfigurationResult revInfoCfgResult = revInfoCfg.configure( coreConfiguration );
+		revisionInfoEntityMapping = revInfoCfgResult.getRevisionInfoMapping();
+		auditEntCfg = new AuditEntitiesConfiguration( metadata.getServiceRegistry(), revInfoCfgResult.getRevisionInfoEntityName() );
 		auditProcessManager = new AuditProcessManager( revInfoCfgResult.getRevisionInfoGenerator() );
 		revisionInfoQueryCreator = revInfoCfgResult.getRevisionInfoQueryCreator();
 		revisionInfoNumberReader = revInfoCfgResult.getRevisionInfoNumberReader();
 		modifiedEntityNamesReader = revInfoCfgResult.getModifiedEntityNamesReader();
-		this.classLoaderService = classLoaderService;
+		classLoaderService = metadata.getServiceRegistry().getService( ClassLoaderService.class );
 		auditStrategy = initializeAuditStrategy(
 				revInfoCfgResult.getRevisionInfoClass(),
 				revInfoCfgResult.getRevisionInfoTimestampData()
 		);
 		entCfg = new EntitiesConfigurator().configure(
-				cfg, reflectionManager, globalCfg, auditEntCfg, auditStrategy,
-				revInfoCfgResult.getRevisionInfoXmlMapping(), revInfoCfgResult.getRevisionInfoRelationMapping()
+				coreConfiguration, globalCfg, auditEntCfg, auditStrategy,
+				revInfoCfgResult.getRevisionInfoMapping(), revInfoCfgResult.getRevisionInfoRelationMapping()
 		);
 	}
 
@@ -121,13 +124,15 @@ public class AuditConfiguration {
 		AuditStrategy strategy;
 
 		try {
-
 			Class<?> auditStrategyClass = null;
 			if ( classLoaderService != null ) {
 				auditStrategyClass = classLoaderService.classForName( auditEntCfg.getAuditStrategyName() );
 			}
 			else {
-				auditStrategyClass = ReflectHelper.classForName( auditEntCfg.getAuditStrategyName() );
+				// TODO: Is this block really necessary?
+				auditStrategyClass = Thread.currentThread()
+						.getContextClassLoader()
+						.loadClass( auditEntCfg.getAuditStrategyName() );
 			}
 
 			strategy = (AuditStrategy) ReflectHelper.getDefaultConstructor(auditStrategyClass).newInstance();
@@ -148,25 +153,20 @@ public class AuditConfiguration {
 		return strategy;
 	}
 
-	//
+	private static Map<MetadataImplementor, AuditConfiguration> cfgs = new WeakHashMap<MetadataImplementor, AuditConfiguration>();
 
-	private static Map<Configuration, AuditConfiguration> cfgs
-			= new WeakHashMap<Configuration, AuditConfiguration>();
-
-	public synchronized static AuditConfiguration getFor(Configuration cfg) {
-		return getFor( cfg, null );
-	}
-
-	public synchronized static AuditConfiguration getFor(Configuration cfg, ClassLoaderService classLoaderService) {
-		AuditConfiguration verCfg = cfgs.get( cfg );
+	public synchronized static AuditConfiguration register(MetadataImplementor metadata, IndexView jandexIndex) {
+		AuditConfiguration verCfg = cfgs.get( metadata );
 
 		if ( verCfg == null ) {
-			verCfg = new AuditConfiguration( cfg, classLoaderService );
-			cfgs.put( cfg, verCfg );
-
-			cfg.buildMappings();
+			verCfg = new AuditConfiguration( metadata, jandexIndex );
+			cfgs.put( metadata, verCfg );
 		}
 
 		return verCfg;
+	}
+
+	public synchronized static AuditConfiguration get(MetadataImplementor metadata) {
+		return cfgs.get( metadata );
 	}
 }

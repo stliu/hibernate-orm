@@ -33,6 +33,6 @@ public class AnnotationConfigurationTaskWithEnvers extends AnnotationConfigurati
     protected void doConfiguration(Configuration configuration) {
 		super.doConfiguration(configuration);
 		configuration.buildMappings();
-		AuditConfiguration.getFor(configuration);
+		// TODO: AuditConfiguration.getFor(configuration);
     }
 }

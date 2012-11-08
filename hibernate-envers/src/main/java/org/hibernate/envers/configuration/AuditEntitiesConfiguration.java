@@ -24,9 +24,10 @@
 package org.hibernate.envers.configuration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
+import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.envers.strategy.DefaultAuditStrategy;
+import org.hibernate.service.ServiceRegistry;
 
 import static org.hibernate.envers.tools.Tools.getProperty;
 
@@ -58,49 +59,51 @@ public class AuditEntitiesConfiguration {
     private final boolean revisionEndTimestampEnabled;
     private final String revisionEndTimestampFieldName;
 
-    public AuditEntitiesConfiguration(Properties properties, String revisionInfoEntityName) {
+    public AuditEntitiesConfiguration(ServiceRegistry serviceRegistry, String revisionInfoEntityName) {
+		final ConfigurationService configurationService = serviceRegistry.getService( ConfigurationService.class );
+
         this.revisionInfoEntityName = revisionInfoEntityName;
 
-        auditTablePrefix = getProperty(properties,
+        auditTablePrefix = getProperty(configurationService,
                 "org.hibernate.envers.audit_table_prefix",
                 "org.hibernate.envers.auditTablePrefix",
                 "");
-        auditTableSuffix = getProperty(properties,
+        auditTableSuffix = getProperty(configurationService,
                 "org.hibernate.envers.audit_table_suffix", 
                 "org.hibernate.envers.auditTableSuffix",
                 "_AUD");
 
-        auditStrategyName = getProperty(properties,
+        auditStrategyName = getProperty(configurationService,
                 "org.hibernate.envers.audit_strategy",
                 "org.hibernate.envers.audit_strategy",
                 DefaultAuditStrategy.class.getName());
 
         originalIdPropName = "originalId";
 
-        revisionFieldName = getProperty(properties,
+        revisionFieldName = getProperty(configurationService,
                 "org.hibernate.envers.revision_field_name",
                 "org.hibernate.envers.revisionFieldName",
                 "REV");
 
-        revisionTypePropName = getProperty(properties,
+        revisionTypePropName = getProperty(configurationService,
                 "org.hibernate.envers.revision_type_field_name", 
                 "org.hibernate.envers.revisionTypeFieldName",
                 "REVTYPE");
         revisionTypePropType = "byte";
 
-        revisionEndFieldName = getProperty(properties,
+        revisionEndFieldName = getProperty(configurationService,
                 "org.hibernate.envers.audit_strategy_validity_end_rev_field_name",
                 "org.hibernate.envers.audit_strategy_valid_time_end_name",
                 "REVEND");
 
-        String revisionEndTimestampEnabledStr = getProperty(properties,
+        String revisionEndTimestampEnabledStr = getProperty(configurationService,
         		"org.hibernate.envers.audit_strategy_validity_store_revend_timestamp",
         		"org.hibernate.envers.audit_strategy_validity_store_revend_timestamp",
         		"false");
         revisionEndTimestampEnabled = Boolean.parseBoolean(revisionEndTimestampEnabledStr);
                 
         if (revisionEndTimestampEnabled) {
-            revisionEndTimestampFieldName = getProperty(properties,
+            revisionEndTimestampFieldName = getProperty(configurationService,
             		"org.hibernate.envers.audit_strategy_validity_revend_timestamp_field_name",
             		"org.hibernate.envers.audit_strategy_validity_revend_timestamp_field_name",
             		"REVEND_TSTMP");
@@ -154,13 +157,9 @@ public class AuditEntitiesConfiguration {
         return revisionInfoEntityName;
     }
 
-    //
-
     public void addCustomAuditTableName(String entityName, String tableName) {
         customAuditTablesNames.put(entityName, tableName);
     }
-
-    //
 
     public String getAuditEntityName(String entityName) {
         return auditTablePrefix + entityName + auditTableSuffix;

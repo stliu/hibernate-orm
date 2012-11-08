@@ -22,6 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 package org.hibernate.envers.configuration.metadata;
+import java.util.Collection;
 import java.util.Iterator;
 import javax.persistence.JoinColumn;
 
@@ -30,6 +31,14 @@ import org.dom4j.Document;
 import org.dom4j.Element;
 
 import org.hibernate.envers.tools.StringTools;
+import org.hibernate.id.enhanced.SequenceStyleGenerator;
+import org.hibernate.internal.util.StringHelper;
+import org.hibernate.jaxb.spi.hbm.JaxbClassElement;
+import org.hibernate.jaxb.spi.hbm.JaxbColumnElement;
+import org.hibernate.jaxb.spi.hbm.JaxbGeneratorElement;
+import org.hibernate.jaxb.spi.hbm.JaxbIdElement;
+import org.hibernate.jaxb.spi.hbm.JaxbParamElement;
+import org.hibernate.jaxb.spi.hbm.JaxbPropertyElement;
 import org.hibernate.mapping.Column;
 import org.hibernate.mapping.Formula;
 
@@ -39,6 +48,35 @@ import org.hibernate.mapping.Formula;
  * @author Michal Skowronek (mskowr at o2 dot pl)
  */
 public class MetadataTools {
+	public static JaxbIdElement addNativelyGeneratedId(JaxbClassElement classElement, String name, String type,
+													   boolean useRevisionEntityWithNativeId) {
+		JaxbIdElement idElement = new JaxbIdElement();
+		idElement.setName( name );
+		idElement.setTypeAttribute( type );
+
+		JaxbGeneratorElement idGeneratorElement = new JaxbGeneratorElement();
+		idElement.setGenerator(idGeneratorElement);
+		if (useRevisionEntityWithNativeId) {
+			idGeneratorElement.setClazz( "native" );
+		}
+		else {
+			idGeneratorElement.setClazz( SequenceStyleGenerator.class.getName() );
+			addJaxbParamElement( idGeneratorElement.getParam(), "sequence_name", "REVISION_GENERATOR" );
+			addJaxbParamElement( idGeneratorElement.getParam(), "table_name", "REVISION_GENERATOR" );
+			addJaxbParamElement( idGeneratorElement.getParam(), "initial_value", "1" );
+			addJaxbParamElement( idGeneratorElement.getParam(), "increment_size", "1" );
+		}
+
+		classElement.setId( idElement );
+		return idElement;
+	}
+
+	private static void addJaxbParamElement(Collection<JaxbParamElement> list, String name, String value) {
+		JaxbParamElement element = new JaxbParamElement();
+		element.setName( name );
+		element.setValue( value );
+		list.add( element );
+	}
 
 	public static Element addNativelyGeneratedId(Element parent, String name, String type,
                                                  boolean useRevisionEntityWithNativeId) {
@@ -61,6 +99,19 @@ public class MetadataTools {
         return id_mapping;
     }
 
+	public static JaxbPropertyElement addProperty(Collection<JaxbPropertyElement> list, String name, String type,
+												  boolean insert, boolean update) {
+		final JaxbPropertyElement property = new JaxbPropertyElement();
+		list.add( property );
+
+		property.setName( name );
+		property.setInsert( insert );
+		property.setUpdate( update );
+		property.setTypeAttribute( type );
+
+		return property;
+	}
+
     public static Element addProperty(Element parent, String name, String type, boolean insertable, boolean updateable, boolean key) {
         Element prop_mapping;
         if (key) {
@@ -79,6 +130,11 @@ public class MetadataTools {
 
         return prop_mapping;
     }
+
+	public static JaxbPropertyElement addProperty(Collection<JaxbPropertyElement> list, String name, String type,
+												  boolean insert) {
+		return addProperty( list, name, type, insert, false );
+	}
 
     public static Element addProperty(Element parent, String name, String type, boolean insertable, boolean key) {
         return addProperty(parent, name, type, insertable, false, key);
@@ -127,6 +183,28 @@ public class MetadataTools {
 									String sqlType, String customRead, String customWrite) {
         return addColumn(parent, name, length, scale, precision, sqlType, customRead, customWrite, false);
     }
+
+	public static JaxbColumnElement addColumn(Collection<JaxbColumnElement> list, String name, Integer length,
+											  Integer scale, Integer precision, String sqlType, String customRead,
+											  String customWrite, boolean quoted) {
+		final JaxbColumnElement column = new JaxbColumnElement();
+		list.add( column );
+		// TODO: Do I need to quote ? column_mapping.addAttribute("name", quoted ? "`" + name + "`" : name);
+		column.setName( quoted ? StringHelper.quote( name ) : name );
+		column.setLength( length );
+		column.setScale( scale );
+		column.setPrecision( precision );
+		if ( !StringTools.isEmpty( sqlType ) ) {
+			column.setSqlType( sqlType );
+		}
+		if ( !StringTools.isEmpty( customRead ) ) {
+			column.setRead( customRead );
+		}
+		if ( !StringTools.isEmpty( customWrite ) ) {
+			column.setWrite( customWrite );
+		}
+		return column;
+	}
 
     public static Element addColumn(Element parent, String name, Integer length, Integer scale, Integer precision,
 									String sqlType, String customRead, String customWrite, boolean quoted) {
@@ -194,6 +272,29 @@ public class MetadataTools {
                                        Boolean isAbstract) {
         return createEntityCommon(document, "class", auditTableData, discriminatorValue, isAbstract);
     }
+
+	public static JaxbClassElement createEntity(AuditTableData auditTableData, String discriminatorValue) {
+		final JaxbClassElement entity = new JaxbClassElement();
+//		TODO: aby każde tworzenie encji miało ustawione false: hibernate_mapping.addAttribute("auto-import", "false");
+
+		if ( auditTableData.getAuditEntityName() != null ) {
+			entity.setEntityName( auditTableData.getAuditEntityName() );
+		}
+		if ( discriminatorValue != null ) {
+			entity.setDiscriminatorValue( discriminatorValue );
+		}
+		if ( !StringTools.isEmpty( auditTableData.getAuditTableName() ) ) {
+			entity.setTable( auditTableData.getAuditTableName() );
+		}
+		if ( !StringTools.isEmpty( auditTableData.getSchema() ) ) {
+			entity.setSchema( auditTableData.getSchema() );
+		}
+		if ( !StringTools.isEmpty( auditTableData.getCatalog() ) ) {
+			entity.setCatalog( auditTableData.getCatalog() );
+		}
+
+		return entity;
+	}
 
     public static Element createSubclassEntity(Document document, String subclassType, AuditTableData auditTableData,
                                                String extendsEntityName, String discriminatorValue, Boolean isAbstract) {

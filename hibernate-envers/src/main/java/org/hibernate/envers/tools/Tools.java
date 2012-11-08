@@ -33,12 +33,22 @@ import java.util.Properties;
 import java.util.Set;
 
 import javassist.util.proxy.ProxyFactory;
+import org.jboss.jandex.AnnotationTarget;
+import org.jboss.jandex.ClassInfo;
+import org.jboss.jandex.DotName;
+import org.jboss.jandex.FieldInfo;
+import org.jboss.jandex.IndexView;
+import org.jboss.jandex.MethodInfo;
 
+import org.hibernate.AssertionFailure;
 import org.hibernate.Session;
 import org.hibernate.annotations.common.reflection.XClass;
 import org.hibernate.annotations.common.reflection.XProperty;
+import org.hibernate.engine.config.spi.ConfigurationService;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.metamodel.spi.MetadataImplementor;
+import org.hibernate.metamodel.spi.binding.EntityBinding;
 import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.proxy.HibernateProxy;
 
@@ -182,23 +192,22 @@ public class Tools {
         return ret;
     }
 
-    /**
-     * @param properties Properties from which to read.
-     * @param propertyName The name of the property.
-     * @param legacyPropertyName Legacy name of the property. The value of this property is read if value for
-     * {@code propertyName} is not set.
-     * @param defaultValue Default value returned if a value neither for {@code propertyName} or
-     * {@code legacyPropertyName} is set.
-     * @return The value of the property, legacy proparty or the default value, if neither of the values are not set.
-     */
-    public static String getProperty(Properties properties, String propertyName, String legacyPropertyName, String defaultValue) {
-        String value = properties.getProperty(propertyName, null);
-        if (value == null) {
-            return properties.getProperty(legacyPropertyName, defaultValue);
-        } else {
-            return value;
-        }
-    }
+	/**
+	 * @param configurationService Configuration service storing properties from which to read.
+	 * @param propertyName The name of the property.
+	 * @param legacyPropertyName Legacy name of the property. The value of this property is read if value for
+	 *                           {@code propertyName} is not set.
+	 * @param defaultValue Default value returned if a value neither for {@code propertyName} or
+	 *                     {@code legacyPropertyName} is set.
+	 * @return The value of the property, legacy property or the default value, if neither of the values are not set.
+	 */
+	public static String getProperty(ConfigurationService configurationService, String propertyName, String legacyPropertyName, String defaultValue) {
+		String value = configurationService.getSetting( propertyName, String.class, null );
+		if ( value == null ) {
+			return configurationService.getSetting( legacyPropertyName, String.class, defaultValue );
+		}
+		return value;
+	}
 
     /**
      * @return Java class mapped to specified entity name.
@@ -250,4 +259,20 @@ public class Tools {
         }
         return null;
     }
+
+	public static boolean isFieldOrPropertyOfClass(AnnotationTarget target, ClassInfo clazz, IndexView jandexIndex) {
+		ClassInfo enclosingClass = null;
+		if ( target instanceof FieldInfo ) {
+			final FieldInfo field = (FieldInfo) target;
+			enclosingClass = field.declaringClass();
+		}
+		else if ( target instanceof MethodInfo ) {
+			final MethodInfo method = (MethodInfo) target;
+			enclosingClass = method.declaringClass();
+		}
+		else {
+			throw new AssertionFailure( "Unexpected annotation target " + target.toString() );
+		}
+		return enclosingClass.equals( clazz ) || jandexIndex.getAllKnownSubclasses( clazz.name() ).contains( enclosingClass );
+	}
 }
