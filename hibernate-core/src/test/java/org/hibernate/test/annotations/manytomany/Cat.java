@@ -3,6 +3,7 @@ package org.hibernate.test.annotations.manytomany;
 import java.util.Set;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
+import javax.persistence.Index;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
@@ -21,7 +22,7 @@ public class Cat {
 
 	@ManyToMany
 	//@Index(name = "CAT_HUMAN_IDX")
-	@JoinTable(name="TT")
+	@JoinTable(name="TT", indexes = @Index( columnList = "humanContacts_firstName, humanContacts_lastName desc"))
 	public Set<Woman> getHumanContacts() {
 		return humanContacts;
 	}

@@ -33,6 +33,7 @@ import java.util.List;
 
 import javax.persistence.Access;
 import javax.persistence.Entity;
+import javax.persistence.ForeignKey;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.PrimaryKeyJoinColumn;
@@ -364,15 +365,13 @@ public class EntityBinder {
 		//tuplizers
 		if ( annotatedClass.isAnnotationPresent( Tuplizers.class ) ) {
 			for (Tuplizer tuplizer : annotatedClass.getAnnotation( Tuplizers.class ).value()) {
-				EntityMode mode = EntityMode.parse( tuplizer.entityMode() );
-				//todo tuplizer.entityModeType
+				EntityMode mode = tuplizer.entityModeType()==null? EntityMode.parse( tuplizer.entityMode() ) : tuplizer.entityModeType();
 				persistentClass.addTuplizer( mode, tuplizer.impl().getName() );
 			}
 		}
 		if ( annotatedClass.isAnnotationPresent( Tuplizer.class ) ) {
 			Tuplizer tuplizer = annotatedClass.getAnnotation( Tuplizer.class );
-			EntityMode mode = EntityMode.parse( tuplizer.entityMode() );
-			//todo tuplizer.entityModeType
+			EntityMode mode = tuplizer.entityModeType()==null? EntityMode.parse( tuplizer.entityMode() ) : tuplizer.entityModeType();
 			persistentClass.addTuplizer( mode, tuplizer.impl().getName() );
 		}
 
@@ -585,6 +584,16 @@ public class EntityBinder {
 		mappings.addJoins( persistentClass, secondaryTables );
 	}
 
+	private boolean hasJoinColumns(PrimaryKeyJoinColumn[] pkColumnsAnn,JoinColumn[] joinColumnsAnn){
+		if( pkColumnsAnn == null && joinColumnsAnn==null){
+			return false;
+		}
+		int nbrOfJoinColumns = pkColumnsAnn != null ?
+				pkColumnsAnn.length :
+				joinColumnsAnn.length;
+		return nbrOfJoinColumns != 0;
+	}
+
 	private void createPrimaryColumnsToSecondaryTable(Object uncastedColumn, PropertyHolder propertyHolder, Join join) {
 		Ejb3JoinColumn[] ejb3JoinColumns;
 		PrimaryKeyJoinColumn[] pkColumnsAnn = null;
@@ -595,7 +604,8 @@ public class EntityBinder {
 		if ( uncastedColumn instanceof JoinColumn[] ) {
 			joinColumnsAnn = (JoinColumn[]) uncastedColumn;
 		}
-		if ( pkColumnsAnn == null && joinColumnsAnn == null ) {
+		final ForeignKey[] foreignKeys;
+		if (hasJoinColumns( pkColumnsAnn, joinColumnsAnn ) ) {
 			ejb3JoinColumns = new Ejb3JoinColumn[1];
 			ejb3JoinColumns[0] = Ejb3JoinColumn.buildJoinColumn(
 					null,
@@ -604,44 +614,36 @@ public class EntityBinder {
 					secondaryTables,
 					propertyHolder, mappings
 			);
+			foreignKeys = null;
 		}
 		else {
 			int nbrOfJoinColumns = pkColumnsAnn != null ?
 					pkColumnsAnn.length :
 					joinColumnsAnn.length;
-			if ( nbrOfJoinColumns == 0 ) {
-				ejb3JoinColumns = new Ejb3JoinColumn[1];
-				ejb3JoinColumns[0] = Ejb3JoinColumn.buildJoinColumn(
-						null,
-						null,
-						persistentClass.getIdentifier(),
-						secondaryTables,
-						propertyHolder, mappings
-				);
+			ejb3JoinColumns = new Ejb3JoinColumn[nbrOfJoinColumns];
+			foreignKeys = new ForeignKey[nbrOfJoinColumns];
+			if ( pkColumnsAnn != null ) {
+				for ( int colIndex = 0; colIndex < nbrOfJoinColumns; colIndex++ ) {
+					ejb3JoinColumns[colIndex] = Ejb3JoinColumn.buildJoinColumn(
+							pkColumnsAnn[colIndex],
+							null,
+							persistentClass.getIdentifier(),
+							secondaryTables,
+							propertyHolder, mappings
+					);
+					foreignKeys[colIndex] = pkColumnsAnn[colIndex].foreignKey();
+				}
 			}
 			else {
-				ejb3JoinColumns = new Ejb3JoinColumn[nbrOfJoinColumns];
-				if ( pkColumnsAnn != null ) {
-					for (int colIndex = 0; colIndex < nbrOfJoinColumns; colIndex++) {
-						ejb3JoinColumns[colIndex] = Ejb3JoinColumn.buildJoinColumn(
-								pkColumnsAnn[colIndex],
-								null,
-								persistentClass.getIdentifier(),
-								secondaryTables,
-								propertyHolder, mappings
-						);
-					}
-				}
-				else {
-					for (int colIndex = 0; colIndex < nbrOfJoinColumns; colIndex++) {
-						ejb3JoinColumns[colIndex] = Ejb3JoinColumn.buildJoinColumn(
-								null,
-								joinColumnsAnn[colIndex],
-								persistentClass.getIdentifier(),
-								secondaryTables,
-								propertyHolder, mappings
-						);
-					}
+				for ( int colIndex = 0; colIndex < nbrOfJoinColumns; colIndex++ ) {
+					ejb3JoinColumns[colIndex] = Ejb3JoinColumn.buildJoinColumn(
+							null,
+							joinColumnsAnn[colIndex],
+							persistentClass.getIdentifier(),
+							secondaryTables,
+							propertyHolder, mappings
+					);
+					foreignKeys[colIndex] = joinColumnsAnn[colIndex].foreignKey();
 				}
 			}
 		}
@@ -649,10 +651,10 @@ public class EntityBinder {
 		for (Ejb3JoinColumn joinColumn : ejb3JoinColumns) {
 			joinColumn.forceNotNull();
 		}
-		bindJoinToPersistentClass( join, ejb3JoinColumns, mappings );
+		bindJoinToPersistentClass( join, ejb3JoinColumns,foreignKeys, mappings );
 	}
 
-	private void bindJoinToPersistentClass(Join join, Ejb3JoinColumn[] ejb3JoinColumns, Mappings mappings) {
+	private void bindJoinToPersistentClass(Join join, Ejb3JoinColumn[] ejb3JoinColumns, ForeignKey[] foreignKeys, Mappings mappings) {
 		SimpleValue key = new DependantValue( mappings, join.getTable(), persistentClass.getIdentifier() );
 		join.setKey( key );
 		setFKNameIfDefined( join );
@@ -785,9 +787,9 @@ public class EntityBinder {
 				mappings,
 				null
 		);
-
-		if ( secondaryTable != null ) {
-			TableBinder.addIndexes( table, secondaryTable.indexes(), mappings );
+		final javax.persistence.Index [] indexes = secondaryTable != null ? secondaryTable.indexes() : joinTable.indexes();
+		if ( indexes != null && indexes.length > 0 ) {
+			TableBinder.addIndexes( table, indexes, mappings );
 		}
 
 			//no check constraints available on joins

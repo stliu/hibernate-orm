@@ -34,9 +34,11 @@ import java.util.Properties;
 
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
+import javax.persistence.CollectionTable;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embeddable;
 import javax.persistence.FetchType;
+import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinColumns;
 import javax.persistence.JoinTable;
@@ -86,6 +88,7 @@ import org.hibernate.cfg.CollectionSecondPass;
 import org.hibernate.cfg.Ejb3Column;
 import org.hibernate.cfg.Ejb3JoinColumn;
 import org.hibernate.cfg.IndexColumn;
+import org.hibernate.cfg.IndexOrUniqueKeySecondPass;
 import org.hibernate.cfg.InheritanceState;
 import org.hibernate.cfg.Mappings;
 import org.hibernate.cfg.PropertyData;
@@ -155,6 +158,7 @@ public abstract class CollectionBinder {
 	private boolean ignoreNotFound;
 	private TableBinder tableBinder;
 	private Ejb3Column[] mapKeyColumns;
+	private Index[] jpaIndexes;
 	private Ejb3JoinColumn[] mapKeyManyToManyColumns;
 	protected HashMap<String, IdGenerator> localGenerators;
 	protected Map<XClass, InheritanceState> inheritanceStatePerClass;
@@ -180,6 +184,14 @@ public abstract class CollectionBinder {
 
 	protected boolean isHibernateExtensionMapping() {
 		return hibernateExtensionMapping;
+	}
+
+	public Index[] getJpaIndexes() {
+		return jpaIndexes;
+	}
+
+	public void setJpaIndexes(Index[] jpaIndexes) {
+		this.jpaIndexes = jpaIndexes;
 	}
 
 	public void setUpdatable(boolean updatable) {
@@ -564,7 +576,7 @@ public abstract class CollectionBinder {
 		binder.setName( propertyName );
 		binder.setValue( collection );
 		binder.setCascade( cascadeStrategy );
-		if ( cascadeStrategy != null && cascadeStrategy.indexOf( "delete-orphan" ) >= 0 ) {
+		if ( cascadeStrategy != null && cascadeStrategy.contains( "delete-orphan" ) ) {
 			collection.setOrphanDelete( true );
 		}
 		binder.setAccessType( accessType );
@@ -669,6 +681,19 @@ public abstract class CollectionBinder {
 						persistentClasses, collType, fkJoinColumns, keyColumns, inverseColumns, elementColumns,
 						isEmbedded, property, unique, assocTableBinder, ignoreNotFound, mappings
 				);
+				if ( jpaIndexes != null && jpaIndexes.length > 0 ) {
+					for ( javax.persistence.Index index : jpaIndexes ) {
+						//no need to handle inSecondPass here since it is only called from EntityBinder
+								new IndexOrUniqueKeySecondPass(
+										collection.getCollectionTable(),
+										index.name(),
+										index.columnList(),
+										mappings,
+										index.unique()
+								).doSecondPass( persistentClasses );
+					}
+
+				}
 			}
 		};
 	}

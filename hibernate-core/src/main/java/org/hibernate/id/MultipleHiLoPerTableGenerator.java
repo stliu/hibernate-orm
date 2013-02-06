@@ -98,12 +98,21 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 	private static final String DEFAULT_PK_COLUMN = "sequence_name";
 	private static final String DEFAULT_VALUE_COLUMN = "sequence_next_hi_value";
 
+	public static final String INDEX_NAME_PARAM = org.hibernate.id.enhanced.TableGenerator.INDEX_NAME_PARAM;
+	public static final String INDEX_COLUMNS_PARAM = org.hibernate.id.enhanced.TableGenerator.INDEX_COLUMNS_PARAM;
+	public static final String IS_UNIQUE_INDEX_PARAM = org.hibernate.id.enhanced.TableGenerator.IS_UNIQUE_INDEX_PARAM;
+
 	private String tableName;
 	private String pkColumnName;
 	private String valueColumnName;
 	private String query;
 	private String insert;
 	private String update;
+
+	//jpa 2.1 index
+	private String indexName;
+	private String columnList;
+	private boolean unique;
 
 	//hilo params
 	public static final String MAX_LO = "max_lo";
@@ -114,7 +123,7 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 	private Class returnClass;
 	private int keySize;
 
-
+	@Override
 	public String[] sqlCreateStrings(Dialect dialect) throws HibernateException {
 		return new String[] {
 			new StringBuilder( dialect.getCreateTableString() )
@@ -132,7 +141,7 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 					.toString()
 		};
 	}
-
+	@Override
 	public String[] sqlDropStrings(Dialect dialect) throws HibernateException {
 		StringBuilder sqlDropString = new StringBuilder( "drop table " );
 		if ( dialect.supportsIfExistsBeforeTableName() ) {
@@ -144,11 +153,11 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 		}
 		return new String[] { sqlDropString.toString() };
 	}
-
+	@Override
 	public Object generatorKey() {
 		return tableName;
 	}
-
+	@Override
 	public synchronized Serializable generate(final SessionImplementor session, Object obj) {
 		final WorkExecutorVisitable<IntegralDataTypeHolder> work = new AbstractReturningWork<IntegralDataTypeHolder>() {
 			@Override
@@ -228,7 +237,7 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 				}
 		);
 	}
-
+	@Override
 	public void configure(Type type, Properties params, Dialect dialect) throws MappingException {
 		ObjectNameNormalizer normalizer = ( ObjectNameNormalizer ) params.get( IDENTIFIER_NORMALIZER );
 
@@ -247,6 +256,8 @@ public class MultipleHiLoPerTableGenerator implements PersistentIdentifierGenera
 			// if already qualified there is not much we can do in a portable manner so we pass it
 			// through and assume the user has set up the name correctly.
 		}
+
+	   	indexName = ConfigurationHelper.getString( INDEX_NAME_PARAM, params );
 
 		pkColumnName = dialect.quote(
 				normalizer.normalizeIdentifierQuoting(

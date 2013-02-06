@@ -375,12 +375,6 @@ public final class AnnotationBinder {
 				idGen.setIdentifierGeneratorStrategy( org.hibernate.id.enhanced.TableGenerator.class.getName() );
 				idGen.addParam( org.hibernate.id.enhanced.TableGenerator.CONFIG_PREFER_SEGMENT_PER_ENTITY, "true" );
 
-				if ( !BinderHelper.isEmptyAnnotationValue( tabGen.catalog() ) ) {
-					idGen.addParam( PersistentIdentifierGenerator.CATALOG, tabGen.catalog() );
-				}
-				if ( !BinderHelper.isEmptyAnnotationValue( tabGen.schema() ) ) {
-					idGen.addParam( PersistentIdentifierGenerator.SCHEMA, tabGen.schema() );
-				}
 				if ( !BinderHelper.isEmptyAnnotationValue( tabGen.table() ) ) {
 					idGen.addParam( org.hibernate.id.enhanced.TableGenerator.TABLE_PARAM, tabGen.table() );
 				}
@@ -408,23 +402,12 @@ public final class AnnotationBinder {
 						org.hibernate.id.enhanced.TableGenerator.INITIAL_PARAM,
 						String.valueOf( tabGen.initialValue() + 1 )
 				);
-                if (tabGen.uniqueConstraints() != null && tabGen.uniqueConstraints().length > 0) LOG.warn(tabGen.name());
 			}
 			else {
 				idGen.setIdentifierGeneratorStrategy( MultipleHiLoPerTableGenerator.class.getName() );
-
 				if ( !BinderHelper.isEmptyAnnotationValue( tabGen.table() ) ) {
 					idGen.addParam( MultipleHiLoPerTableGenerator.ID_TABLE, tabGen.table() );
 				}
-				if ( !BinderHelper.isEmptyAnnotationValue( tabGen.catalog() ) ) {
-					idGen.addParam( PersistentIdentifierGenerator.CATALOG, tabGen.catalog() );
-				}
-				if ( !BinderHelper.isEmptyAnnotationValue( tabGen.schema() ) ) {
-					idGen.addParam( PersistentIdentifierGenerator.SCHEMA, tabGen.schema() );
-				}
-				//FIXME implement uniqueconstrains
-                if (tabGen.uniqueConstraints() != null && tabGen.uniqueConstraints().length > 0) LOG.ignoringTableGeneratorConstraints(tabGen.name());
-
 				if ( !BinderHelper.isEmptyAnnotationValue( tabGen.pkColumnName() ) ) {
 					idGen.addParam( MultipleHiLoPerTableGenerator.PK_COLUMN_NAME, tabGen.pkColumnName() );
 				}
@@ -436,6 +419,15 @@ public final class AnnotationBinder {
 				}
 				idGen.addParam( TableHiLoGenerator.MAX_LO, String.valueOf( tabGen.allocationSize() - 1 ) );
 			}
+			if ( !BinderHelper.isEmptyAnnotationValue( tabGen.catalog() ) ) {
+				idGen.addParam( PersistentIdentifierGenerator.CATALOG, tabGen.catalog() );
+			}
+			if ( !BinderHelper.isEmptyAnnotationValue( tabGen.schema() ) ) {
+				idGen.addParam( PersistentIdentifierGenerator.SCHEMA, tabGen.schema() );
+			}
+			//FIXME implement uniqueconstrains
+			if (tabGen.uniqueConstraints() != null && tabGen.uniqueConstraints().length > 0) LOG.ignoringTableGeneratorConstraints(tabGen.name());
+
 			if ( LOG.isTraceEnabled() ) {
 				LOG.tracev( "Add table generator with name: {0}", idGen.getName() );
 			}
@@ -1954,7 +1946,6 @@ public final class AnnotationBinder {
 				collectionBinder.setInheritanceStatePerClass( inheritanceStatePerClass );
 				collectionBinder.setDeclaringClass( inferredData.getDeclaringClass() );
 				collectionBinder.bind();
-
 			}
 			//Either a regular property or a basic @Id or @EmbeddedId while not ignoring id annotations
 			else if ( !isId || !entityBinder.isIgnoreIdAnnotations() ) {
@@ -2172,7 +2163,7 @@ public final class AnnotationBinder {
 		JoinColumn[] annInverseJoins;
 		JoinTable assocTable = propertyHolder.getJoinTable( property );
 		CollectionTable collectionTable = property.getAnnotation( CollectionTable.class );
-
+		final javax.persistence.Index[] indexes;
 		if ( assocTable != null || collectionTable != null ) {
 
 			final String catalog;
@@ -2190,6 +2181,7 @@ public final class AnnotationBinder {
 				uniqueConstraints = collectionTable.uniqueConstraints();
 				joins = collectionTable.joinColumns();
 				inverseJoins = null;
+				indexes = collectionTable.indexes();
 			}
 			else {
 				catalog = assocTable.catalog();
@@ -2198,6 +2190,7 @@ public final class AnnotationBinder {
 				uniqueConstraints = assocTable.uniqueConstraints();
 				joins = assocTable.joinColumns();
 				inverseJoins = assocTable.inverseJoinColumns();
+				indexes = assocTable.indexes();
 			}
 
 			collectionBinder.setExplicitAssociationTable( true );
@@ -2212,7 +2205,6 @@ public final class AnnotationBinder {
 				associationTableBinder.setName( tableName );
 			}
 			associationTableBinder.setUniqueConstraints( uniqueConstraints );
-
 			//set check constaint in the second pass
 			annJoins = joins.length == 0 ? null : joins;
 			annInverseJoins = inverseJoins == null || inverseJoins.length == 0 ? null : inverseJoins;
@@ -2220,6 +2212,7 @@ public final class AnnotationBinder {
 		else {
 			annJoins = null;
 			annInverseJoins = null;
+			indexes = null;
 		}
 		Ejb3JoinColumn[] joinColumns = Ejb3JoinColumn.buildJoinTableJoinColumns(
 				annJoins, entityBinder.getSecondaryTables(), propertyHolder, inferredData.getPropertyName(), mappedBy,
@@ -2233,6 +2226,7 @@ public final class AnnotationBinder {
 		collectionBinder.setTableBinder( associationTableBinder );
 		collectionBinder.setJoinColumns( joinColumns );
 		collectionBinder.setInverseJoinColumns( inverseJoinColumns );
+		collectionBinder.setJpaIndexes( indexes );
 	}
 
 	private static PropertyBinder bindComponent(
@@ -2576,17 +2570,20 @@ public final class AnnotationBinder {
 		}
 		if ( property.isAnnotationPresent( Tuplizers.class ) ) {
 			for ( Tuplizer tuplizer : property.getAnnotation( Tuplizers.class ).value() ) {
-				EntityMode mode = EntityMode.parse( tuplizer.entityMode() );
-				//todo tuplizer.entityModeType
-				component.addTuplizer( mode, tuplizer.impl().getName() );
+				parseTuplizer( property, component, tuplizer );
 			}
 		}
 		if ( property.isAnnotationPresent( Tuplizer.class ) ) {
 			Tuplizer tuplizer = property.getAnnotation( Tuplizer.class );
-			EntityMode mode = EntityMode.parse( tuplizer.entityMode() );
-			//todo tuplizer.entityModeType
-			component.addTuplizer( mode, tuplizer.impl().getName() );
+			parseTuplizer( property, component, tuplizer );
 		}
+	}
+
+	private static void parseTuplizer(XProperty property, Component component, Tuplizer tuplizer) {
+
+		final EntityMode mode = tuplizer.entityModeType() == null ? EntityMode.parse( tuplizer.entityMode() ) : tuplizer
+				.entityModeType();
+		component.addTuplizer( mode, tuplizer.impl().getName() );
 	}
 
 	private static void bindManyToOne(

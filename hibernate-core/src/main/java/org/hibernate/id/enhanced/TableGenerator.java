@@ -158,6 +158,9 @@ public class TableGenerator implements PersistentIdentifierGenerator, Configurab
 	public static final int DEFAULT_INCREMENT_SIZE = 1;
 
 	public static final String OPT_PARAM = "optimizer";
+	public static final String INDEX_NAME_PARAM = "index_name";
+	public static final String INDEX_COLUMNS_PARAM = "index_columns";
+	public static final String IS_UNIQUE_INDEX_PARAM = "is_unique_index";
 
 
 	private Type identifierType;

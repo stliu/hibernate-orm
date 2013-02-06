@@ -41,6 +41,7 @@ import org.hibernate.FetchMode;
 import org.hibernate.MappingException;
 import org.hibernate.annotations.common.reflection.XProperty;
 import org.hibernate.cfg.AttributeConverterDefinition;
+import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Environment;
 import org.hibernate.cfg.Mappings;
 import org.hibernate.dialect.Dialect;
@@ -50,6 +51,7 @@ import org.hibernate.id.IdentityGenerator;
 import org.hibernate.id.PersistentIdentifierGenerator;
 import org.hibernate.id.factory.IdentifierGeneratorFactory;
 import org.hibernate.internal.util.ReflectHelper;
+import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.type.AbstractSingleColumnStandardBasicType;
 import org.hibernate.type.Type;
 import org.hibernate.type.descriptor.ValueBinder;
@@ -213,8 +215,8 @@ public class SimpleValue implements KeyValue {
 
 		// TODO : we should pass along all settings once "config lifecycle" is hashed out...
 		params.put(
-				Environment.PREFER_POOLED_VALUES_LO,
-				mappings.getConfigurationProperties().getProperty( Environment.PREFER_POOLED_VALUES_LO, "false" )
+				AvailableSettings.PREFER_POOLED_VALUES_LO,
+				mappings.getConfigurationProperties().getProperty( AvailableSettings.PREFER_POOLED_VALUES_LO, "false" )
 		);
 
 		identifierGeneratorFactory.setDialect( dialect );
@@ -315,7 +317,7 @@ public class SimpleValue implements KeyValue {
 	}
 
 	public boolean isValid(Mapping mapping) throws MappingException {
-		return getColumnSpan()==getType().getColumnSpan(mapping);
+		return getColumnSpan() == getType().getColumnSpan( mapping );
 	}
 
 	public Type getType() throws MappingException {
@@ -332,8 +334,8 @@ public class SimpleValue implements KeyValue {
 			createParameterImpl();
 		}
 
-		Type result = mappings.getTypeResolver().heuristicType( typeName, typeParameters );
-		if ( result == null ) {
+		type = mappings.getTypeResolver().heuristicType( typeName, typeParameters );
+		if ( type == null ) {
 			String msg = "Could not determine type for: " + typeName;
 			if ( table != null ) {
 				msg += ", at table: " + table.getName();
@@ -343,8 +345,7 @@ public class SimpleValue implements KeyValue {
 			}
 			throw new MappingException( msg );
 		}
-
-		return result;
+		return type;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -541,7 +542,7 @@ public class SimpleValue implements KeyValue {
 							table.getCatalog(),
 							table.getSchema(),
 							table.getName(),
-							Boolean.valueOf( typeParameters.getProperty( DynamicParameterizedType.IS_PRIMARY_KEY ) ),
+							ConfigurationHelper.getBoolean( DynamicParameterizedType.IS_PRIMARY_KEY, typeParameters ),
 							columnsNames
 					)
 			);

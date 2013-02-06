@@ -26,6 +26,7 @@ package org.hibernate.cfg.annotations;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import javax.persistence.ForeignKey;
 import javax.persistence.UniqueConstraint;
 
 import org.jboss.logging.Logger;
@@ -175,7 +176,6 @@ public class TableBinder {
 				return strategy.tableName( name );
 			}
 		};
-
 		return buildAndFillTable(
 				schema,
 				catalog,
@@ -305,11 +305,11 @@ public class TableBinder {
 		}
 		return table;
 	}
-
 	public static void bindFk(
 			PersistentClass referencedEntity,
 			PersistentClass destinationEntity,
 			Ejb3JoinColumn[] columns,
+			ForeignKey[] foreignKeys,
 			SimpleValue value,
 			boolean unique,
 			Mappings mappings) {
@@ -476,6 +476,16 @@ public class TableBinder {
 		if ( unique ) {
 			createUniqueConstraint( value );
 		}
+
+	}
+	public static void bindFk(
+			PersistentClass referencedEntity,
+			PersistentClass destinationEntity,
+			Ejb3JoinColumn[] columns,
+			SimpleValue value,
+			boolean unique,
+			Mappings mappings) {
+		bindFk( referencedEntity, destinationEntity, columns, null, value, unique, mappings );
 	}
 
 	public static void linkJoinColumnWithValueOverridingNameIfImplicit(
