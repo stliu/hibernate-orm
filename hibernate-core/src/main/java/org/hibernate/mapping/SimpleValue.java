@@ -334,8 +334,8 @@ public class SimpleValue implements KeyValue {
 			createParameterImpl();
 		}
 
-		type = mappings.getTypeResolver().heuristicType( typeName, typeParameters );
-		if ( type == null ) {
+		Type result = mappings.getTypeResolver().heuristicType( typeName, typeParameters );
+		if ( result == null ) {
 			String msg = "Could not determine type for: " + typeName;
 			if ( table != null ) {
 				msg += ", at table: " + table.getName();
@@ -345,7 +345,7 @@ public class SimpleValue implements KeyValue {
 			}
 			throw new MappingException( msg );
 		}
-		return type;
+		return result;
 	}
 
 	@SuppressWarnings("unchecked")
