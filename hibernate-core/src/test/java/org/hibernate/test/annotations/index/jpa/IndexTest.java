@@ -78,7 +78,6 @@ public class IndexTest extends BaseCoreFunctionalTestCase {
 	@Test
 	public void testSecondaryTableIndex(){
 		PersistentClass entity = configuration().getClassMapping( Book.class.getName() );
-
 		Join join = (Join)entity.getJoinIterator().next();
 		Iterator<Index> itr = join.getTable().getIndexIterator();
 		assertTrue( itr.hasNext() );
@@ -92,6 +91,20 @@ public class IndexTest extends BaseCoreFunctionalTestCase {
 		column = columnIterator.next();
 		assertEquals( "text", column.getName() );
 		assertSame( join.getTable(), index.getTable() );
+	}
+
+	@Test
+	public void testJoinTableIndex(){
+
+	}
+
+	@Test
+	public void testCollectionTableIndex(){
+
+	}
+
+	@Test
+	public void testTableGeneratorIndex(){
 
 	}
 }
