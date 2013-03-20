@@ -68,7 +68,7 @@ import org.xml.sax.SAXException;
 public class JaxbHelper {
 	private static final Logger log = Logger.getLogger( JaxbHelper.class );
 
-	public static final String ASSUMED_ORM_XSD_VERSION = "2.0";
+	public static final String ASSUMED_ORM_XSD_VERSION = "2.1";
 
 	private final MetadataSources metadataSources;
 
@@ -212,12 +212,16 @@ public class JaxbHelper {
 		else if ( "2.0".equals( xsdVersionString ) ) {
 			return orm2Schema();
 		}
+		else if ( "2.1".equals( xsdVersionString ) ) {
+			return orm21Schema();
+		}
 		throw new IllegalArgumentException( "Unsupported orm.xml XSD version encountered [" + xsdVersionString + "]" );
 	}
 
 	public static final String HBM_SCHEMA_NAME = "org/hibernate/hibernate-mapping-4.0.xsd";
 	public static final String ORM_1_SCHEMA_NAME = "org/hibernate/ejb/orm_1_0.xsd";
 	public static final String ORM_2_SCHEMA_NAME = "org/hibernate/ejb/orm_2_0.xsd";
+	public static final String ORM_2_1_SCHEMA_NAME = "org/hibernate/ejb/orm_2_1.xsd";
 
 	private Schema hbmSchema;
 
@@ -245,6 +249,16 @@ public class JaxbHelper {
 		}
 		return orm2Schema;
 	}
+
+	private Schema orm21Schema;
+
+	private Schema orm21Schema() {
+		if ( orm21Schema == null ) {
+			orm21Schema = resolveLocalSchema( ORM_2_1_SCHEMA_NAME );
+		}
+		return orm21Schema;
+	}
+
 
 	private Schema resolveLocalSchema(String schemaName) {
 		return resolveLocalSchema( schemaName, XMLConstants.W3C_XML_SCHEMA_NS_URI );

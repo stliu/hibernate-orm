@@ -69,6 +69,11 @@ public class EJB3DTDEntityResolver extends DTDEntityResolver {
 					final InputSource source = buildInputSource( publicId, systemId, dtdStream, false );
 					if (source != null) return source;
 				}
+				else if ( systemId.endsWith( "orm_2_1.xsd" ) ) {
+					InputStream dtdStream = getStreamFromClasspath( "orm_2_1.xsd" );
+					final InputSource source = buildInputSource( publicId, systemId, dtdStream, false );
+					if (source != null) return source;
+				}
 				else if ( systemId.endsWith( "persistence_1_0.xsd" ) ) {
 					InputStream dtdStream = getStreamFromClasspath( "persistence_1_0.xsd" );
 					final InputSource source = buildInputSource( publicId, systemId, dtdStream, true );
@@ -104,8 +109,7 @@ public class EJB3DTDEntityResolver extends DTDEntityResolver {
 
 	private InputStream getStreamFromClasspath(String fileName) {
 		LOG.trace( "Recognized JPA ORM namespace; attempting to resolve on classpath under org/hibernate/ejb" );
-		String path = "org/hibernate/ejb/" + fileName;
-		InputStream dtdStream = resolveInHibernateNamespace( path );
-		return dtdStream;
+		final String path = "org/hibernate/ejb/" + fileName;
+		return resolveInHibernateNamespace( path );
 	}
 }
