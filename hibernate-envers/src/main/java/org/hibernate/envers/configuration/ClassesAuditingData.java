@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.sun.xml.internal.bind.v2.TODO;
 import org.jboss.logging.Logger;
 
 import org.hibernate.MappingException;
@@ -12,7 +11,6 @@ import org.hibernate.envers.configuration.metadata.reader.ClassAuditingData;
 import org.hibernate.envers.configuration.metadata.reader.PropertyAuditingData;
 import org.hibernate.envers.internal.EnversMessageLogger;
 import org.hibernate.envers.tools.MappingTools;
-import org.hibernate.mapping.PersistentClass;
 import org.hibernate.metamodel.spi.binding.EntityBinding;
 
 /**

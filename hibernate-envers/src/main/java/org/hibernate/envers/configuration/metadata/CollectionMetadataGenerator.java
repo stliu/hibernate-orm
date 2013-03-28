@@ -480,11 +480,11 @@ public final class CollectionMetadataGenerator {
 			final ComponentAuditingData auditData = new ComponentAuditingData();
 			final ReflectionManager reflectionManager = mainGenerator.getCfg().getReflectionManager();
 
-			new ComponentAuditedPropertiesReader(
-					ModificationStore.FULL,
-					new AuditedPropertiesReader.ComponentPropertiesSource( reflectionManager, component ),
-					auditData, mainGenerator.getGlobalCfg(), reflectionManager, ""
-			).read();
+//			new ComponentAuditedPropertiesReader(
+//					ModificationStore.FULL,
+//					new AuditedPropertiesReader.ComponentPropertiesSource( reflectionManager, component ),
+//					auditData, mainGenerator.getGlobalCfg(), reflectionManager, ""
+//			).read();
 
 			// Emulating first pass.
 			for ( String auditedPropertyName : auditData.getPropertyNames() ) {

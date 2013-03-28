@@ -62,7 +62,7 @@ public class CoreConfiguration {
 	public Map<DotName, List<AnnotationInstance>> locateAttributeAnnotations(final AttributeBinding attributeBinding) {
 		final EntityBinding entityBinding = attributeBinding.getContainer().seekEntityBinding();
 		final ClassInfo classInfo = locateClassInfo( entityBinding );
-		return JandexHelper.getMemberAnnotations( classInfo, attributeBinding.getAttribute().getName() );
+		return JandexHelper.getMemberAnnotations( classInfo, attributeBinding.getAttribute().getName(), metadata.getServiceRegistry() );
 	}
 
 	public <T> T createAnnotationProxy(final AnnotationInstance annotationInstance, final Class<T> annotation) {
