@@ -26,7 +26,7 @@ public class EnversJaxbRootProducer implements AdditionalJaxbRootProducer {
 	@Override
 	public List<JaxbRoot> produceRoots(MetadataImplementor metadata, IndexView jandexIndex) {
 		final AuditConfiguration configuration = AuditConfiguration.register( metadata, jandexIndex );
-		final List<JaxbRoot> entities = new LinkedList<>();
+		final List<JaxbRoot> entities = new LinkedList<JaxbRoot>();
 		if ( configuration.getRevisionInfoEntityMapping() != null ) {
 			// User did not provide custom @RevisionEntity.
 			entities.add( configuration.getRevisionInfoEntityMapping() );

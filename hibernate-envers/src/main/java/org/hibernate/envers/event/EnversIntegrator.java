@@ -78,7 +78,7 @@ public class EnversIntegrator implements Integrator {
 		final AuditConfiguration enversConfiguration = AuditConfiguration.get( metadata );
 
 		// Registering only event listeners.
-//		TODO: appendListeners( listenerRegistry, enversConfiguration );
+		appendListeners( listenerRegistry, enversConfiguration );
 	}
 
 	private void appendListeners(EventListenerRegistry listenerRegistry, AuditConfiguration enversConfiguration) {
