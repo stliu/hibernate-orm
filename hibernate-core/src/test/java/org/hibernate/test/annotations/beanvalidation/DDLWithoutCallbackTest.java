@@ -32,7 +32,6 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.cfg.Environment;
 import org.hibernate.metamodel.spi.relational.Column;
 import org.hibernate.test.util.SchemaUtil;
 import org.hibernate.testing.DialectChecks;

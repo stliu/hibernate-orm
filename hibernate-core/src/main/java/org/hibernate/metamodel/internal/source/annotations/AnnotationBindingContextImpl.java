@@ -86,10 +86,10 @@ public class AnnotationBindingContextImpl implements AnnotationBindingContext {
 	}
 
 	@Override
-	public void resolveAllTypes(String className) {
+	public void resolveAllTypes(String className, java.lang.reflect.Type... typeParameters) {
 		// the resolved type for the top level class in the hierarchy
 		Class<?> clazz = classLoaderService.getValue().classForName( className );
-		ResolvedType resolvedType = typeResolver.resolve( clazz );
+		ResolvedType resolvedType = typeResolver.resolve( clazz, typeParameters );
 		while ( resolvedType != null ) {
 			// todo - check whether there is already something in the map
 			resolvedTypeCache.put( clazz, resolvedType );
@@ -99,6 +99,8 @@ public class AnnotationBindingContextImpl implements AnnotationBindingContext {
 			}
 		}
 	}
+
+
 
 	@Override
 	public ResolvedType getResolvedType(Class<?> clazz) {

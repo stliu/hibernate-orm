@@ -23,11 +23,14 @@
  */
 package org.hibernate.metamodel.internal.source.annotations.entity;
 
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import javax.persistence.AccessType;
 
+import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.classmate.TypeBindings;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 
@@ -58,12 +61,12 @@ public class EmbeddableHierarchy implements Iterable<EmbeddableClass> {
 	 */
 	public static EmbeddableHierarchy createEmbeddableHierarchy(
 			final Class<?> embeddableClass,
+//			final ResolvedType resolvedType,
 			final String propertyName,
 			final AccessType accessType,
 			final NaturalIdMutability naturalIdMutability,
 			final String customTuplizerClass,
 			final AnnotationBindingContext context) {
-
 		final ClassInfo embeddableClassInfo = context.getClassInfo( embeddableClass.getName() );
 		if ( embeddableClassInfo == null ) {
 			throw new AssertionFailure(
@@ -98,6 +101,7 @@ public class EmbeddableHierarchy implements Iterable<EmbeddableClass> {
 
 		return new EmbeddableHierarchy(
 				classInfoList,
+//				resolvedType,
 				propertyName,
 				naturalIdMutability,
 				customTuplizerClass,
@@ -109,6 +113,7 @@ public class EmbeddableHierarchy implements Iterable<EmbeddableClass> {
 	@SuppressWarnings("unchecked")
 	private EmbeddableHierarchy(
 			final List<ClassInfo> classInfoList,
+//			final ResolvedType resolvedType,
 			final String propertyName,
 			final NaturalIdMutability naturalIdMutability,
 			final String customTuplizerClass,

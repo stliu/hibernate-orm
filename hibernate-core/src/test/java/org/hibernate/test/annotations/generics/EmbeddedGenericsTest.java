@@ -31,7 +31,7 @@ import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 
 import static org.junit.Assert.assertEquals;
 
-@FailureExpectedWithNewMetamodel
+//@FailureExpectedWithNewMetamodel
 public class EmbeddedGenericsTest extends BaseCoreFunctionalTestCase {
 	@Test
 	public void testWorksWithGenericEmbedded() {

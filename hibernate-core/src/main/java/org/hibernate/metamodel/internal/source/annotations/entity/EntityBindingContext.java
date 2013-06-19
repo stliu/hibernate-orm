@@ -193,8 +193,8 @@ public class EntityBindingContext implements LocalBindingContext, AnnotationBind
 	}
 
 	@Override
-	public void resolveAllTypes(String className) {
-		contextDelegate.resolveAllTypes( className );
+	public void resolveAllTypes(String className , java.lang.reflect.Type ...typeParameters) {
+		contextDelegate.resolveAllTypes( className, typeParameters );
 	}
 
 	@Override

@@ -462,6 +462,11 @@ public final class ReflectHelper {
 						if ( type instanceof TypeVariable ) {
 							fieldTypes.add( (Class<?>) ( (TypeVariable) type )
 									.getGenericDeclaration() );
+						} else if (type instanceof ParameterizedType){
+							ParameterizedType parameterizedType = (ParameterizedType)type;
+							java.lang.reflect.Type[] ts = parameterizedType.getActualTypeArguments();
+							java.lang.reflect.Type rawType = parameterizedType.getRawType();
+							fieldTypes.add( (Class<?>)rawType  );
 						}
 						else {
 							fieldTypes.add( (Class<?>) type );

@@ -25,6 +25,7 @@ package org.hibernate.metamodel.internal.source.annotations.entity;
 
 import javax.persistence.AccessType;
 
+import com.fasterxml.classmate.TypeBindings;
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.ClassInfo;
 

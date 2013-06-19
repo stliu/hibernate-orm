@@ -27,6 +27,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -38,7 +39,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import javax.persistence.AccessType;
 
+import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.ResolvedTypeWithMembers;
+import com.fasterxml.classmate.TypeBindings;
 import com.fasterxml.classmate.members.HierarchicType;
 import com.fasterxml.classmate.members.ResolvedMember;
 import org.jboss.jandex.AnnotationInstance;
@@ -440,7 +443,6 @@ public class ConfiguredClass {
 			}
 		}
 	}
-
 	private void createMappedAttribute(Member member, ResolvedTypeWithMembers resolvedType, AccessType accessType) {
 		final String attributeName = ReflectHelper.getPropertyName( member );
 		final ResolvedMember[] resolvedMembers = Field.class.isInstance( member ) ? resolvedType.getMemberFields() : resolvedType
@@ -507,7 +509,7 @@ public class ConfiguredClass {
 					);
 				}
 				embeddedClasses.put( attributeName, resolveEmbeddable(
-						attributeName, attributeType, annotations ) );
+						attributeName, attributeType, resolvedMember.getType(), annotations ) );
 				break;
 			}
 			case ONE_TO_ONE:
@@ -529,7 +531,7 @@ public class ConfiguredClass {
 			}
 			case ELEMENT_COLLECTION_EMBEDDABLE:
 				collectionEmbeddedClasses.put( attributeName, resolveEmbeddable(
-						attributeName, referencedCollectionType, annotations ) );
+						attributeName, referencedCollectionType, resolvedMember.getType(), annotations ) );
 				// fall through
 			case ELEMENT_COLLECTION_BASIC:
 			case ONE_TO_MANY:
@@ -552,7 +554,11 @@ public class ConfiguredClass {
 		}
 	}
 
-	private EmbeddableClass resolveEmbeddable(String attributeName, Class<?> type, Map<DotName, List<AnnotationInstance>> annotations) {
+	private EmbeddableClass resolveEmbeddable(
+			String attributeName,
+			Class<?> type,
+			final ResolvedType resolvedType,
+			Map<DotName, List<AnnotationInstance>> annotations) {
 		final ClassInfo embeddableClassInfo = localBindingContext.getClassInfo( type.getName() );
 		if ( embeddableClassInfo == null ) {
 			final String msg = String.format(
@@ -565,7 +571,7 @@ public class ConfiguredClass {
 			throw new AnnotationException( msg );
 		}
 
-		localBindingContext.resolveAllTypes( type.getName() );
+		localBindingContext.resolveAllTypes( type.getName(), resolvedType.getTypeBindings().getTypeParameters().toArray(new Type[resolvedType.getTypeBindings().getTypeParameters().size()]) );
 		AnnotationInstance naturalIdAnnotationInstance = JandexHelper.getSingleAnnotation(
 				annotations,
 				HibernateDotNames.NATURAL_ID
@@ -597,6 +603,7 @@ public class ConfiguredClass {
 
 		final EmbeddableHierarchy hierarchy = EmbeddableHierarchy.createEmbeddableHierarchy(
 				localBindingContext.<Object>locateClassByName( embeddableClassInfo.toString() ),
+//				resolvedType,
 				attributeName,
 				classAccessType,
 				naturalIdMutability,

@@ -23,6 +23,8 @@
  */
 package org.hibernate.metamodel.internal.source.annotations;
 
+import java.lang.reflect.Type;
+
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.ResolvedTypeWithMembers;
 import org.jboss.jandex.ClassInfo;
@@ -43,7 +45,7 @@ public interface AnnotationBindingContext extends BindingContext {
 
 	ClassInfo getClassInfo(String name);
 
-	void resolveAllTypes(String className);
+	void resolveAllTypes(String className, Type... typeParameters);
 
 	ResolvedType getResolvedType(Class<?> clazz);
 
