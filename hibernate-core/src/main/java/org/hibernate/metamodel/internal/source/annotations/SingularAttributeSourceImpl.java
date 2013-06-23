@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.hibernate.internal.util.ValueHolder;
 import org.hibernate.mapping.PropertyGeneration;
 import org.hibernate.metamodel.internal.source.annotations.attribute.AttributeOverride;
 import org.hibernate.metamodel.internal.source.annotations.attribute.BasicAttribute;
@@ -43,20 +44,17 @@ import org.hibernate.metamodel.spi.source.SingularAttributeSource;
  */
 public class SingularAttributeSourceImpl implements SingularAttributeSource {
 	private final MappedAttribute attribute;
-	private final AttributeOverride attributeOverride;
+	private final ExplicitHibernateTypeSource type;
 
 	public SingularAttributeSourceImpl(MappedAttribute attribute) {
-		this( attribute, null );
+		this.attribute = attribute;
+		this.type = new ExplicitHibernateTypeSourceImpl( attribute );
 	}
 
-	public SingularAttributeSourceImpl(MappedAttribute attribute, AttributeOverride attributeOverride) {
-		this.attribute = attribute;
-		this.attributeOverride = attributeOverride;
-	}
 
 	@Override
 	public ExplicitHibernateTypeSource getTypeInformation() {
-		return new ExplicitHibernateTypeSourceImpl( attribute );
+		return type;
 	}
 
 	@Override
@@ -94,32 +92,41 @@ public class SingularAttributeSourceImpl implements SingularAttributeSource {
 		return null;
 	}
 
+	private final ValueHolder<List<RelationalValueSource>> relationalValueSources = new ValueHolder<List<RelationalValueSource>>(
+			new ValueHolder.DeferredInitializer<List<RelationalValueSource>>() {
+				@Override
+				public List<RelationalValueSource> initialize() {
+					List<RelationalValueSource> valueSources = new ArrayList<RelationalValueSource>();
+					boolean hasDefinedColumnSource = !attribute.getColumnValues().isEmpty();
+					if ( hasDefinedColumnSource ) {
+						if ( attribute.getNature() == MappedAttribute.Nature.BASIC ) {
+							valueSources.add(
+									new BasicColumnSourceImpl(
+											(BasicAttribute) attribute, attribute.getColumnValues().get( 0 )
+									)
+							);
+						}
+						else {
+							for ( Column columnValues : attribute.getColumnValues() ) {
+
+								valueSources.add( new ColumnSourceImpl( columnValues ) );
+							}
+						}
+					}
+					else if ( attribute.getFormulaValue() != null ) {
+						valueSources.add( new DerivedValueSourceImpl( attribute.getFormulaValue() ) );
+					}
+					return valueSources;
+				}
+			}
+	);
+
 	/**
 	 * very ugly, can we just return the columnSourceImpl anyway?
 	 */
 	@Override
 	public List<RelationalValueSource> relationalValueSources() {
-		List<RelationalValueSource> valueSources = new ArrayList<RelationalValueSource>();
-		if ( ! attribute.getColumnValues().isEmpty() ) {
-			for ( Column columnValues : attribute.getColumnValues() ) {
-				valueSources.add( new ColumnSourceImpl( attribute, attributeOverride, columnValues ) );
-			}
-		}
-		else if ( attributeOverride != null && attributeOverride.getColumnValues() != null ) {
-			valueSources.add( new ColumnSourceImpl( attribute, attributeOverride, null ) );
-		}
-		else if ( attribute.getFormulaValue() != null ){
-			valueSources.add( new DerivedValueSourceImpl( attribute.getFormulaValue() ) );
-		}
-		else if ( BasicAttribute.class.isInstance( attribute ) ) {
-			BasicAttribute basicAttribute = BasicAttribute.class.cast( attribute );
-			if ( basicAttribute.getCustomReadFragment() != null ||
-					basicAttribute.getCustomWriteFragment() != null ||
-					basicAttribute.getCheckCondition() != null ) {
-				valueSources.add( new ColumnSourceImpl( attribute, attributeOverride, null ) );
-			}
-		}
-		return valueSources;
+		return relationalValueSources.getValue();
 	}
 
 	@Override

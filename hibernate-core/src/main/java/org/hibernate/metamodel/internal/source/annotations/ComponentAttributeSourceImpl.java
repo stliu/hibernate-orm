@@ -53,20 +53,17 @@ import org.hibernate.metamodel.spi.source.RelationalValueSource;
  * @author Brett Meyer
  */
 public class ComponentAttributeSourceImpl implements ComponentAttributeSource {
-	private static final String PATH_SEPARATOR = ".";
 	private final EmbeddableClass embeddableClass;
 	private final ValueHolder<Class<?>> classReference;
-	private final Map<String, AttributeOverride> attributeOverrides;
 	private final String path;
 	private final AccessType classAccessType;
 
-	public ComponentAttributeSourceImpl(EmbeddableClass embeddableClass,
-			String parentPath,
-			Map<String, AttributeOverride> attributeOverrides,
-			AccessType classAccessType) {
+	public ComponentAttributeSourceImpl(
+			final EmbeddableClass embeddableClass,
+			final String parentPath,
+			final AccessType classAccessType) {
 		this.embeddableClass = embeddableClass;
 		this.classReference = new ValueHolder<Class<?>>( embeddableClass.getConfiguredClass() );
-		this.attributeOverrides = attributeOverrides;
 		this.path = StringHelper.isEmpty( parentPath ) ? embeddableClass.getEmbeddedAttributeName() : parentPath + "." + embeddableClass.getEmbeddedAttributeName();
 		this.classAccessType = classAccessType;
 	}
@@ -122,14 +119,9 @@ public class ComponentAttributeSourceImpl implements ComponentAttributeSource {
 				@Override
 				public List<AttributeSource> initialize() {
 					List<AttributeSource> attributeList = new ArrayList<AttributeSource>();
-					for ( BasicAttribute attribute : embeddableClass.getSimpleAttributes() ) {
-						AttributeOverride attributeOverride = null;
-						String tmp = getPath() + PATH_SEPARATOR + attribute.getName();
-						if ( attributeOverrides.containsKey( tmp ) ) {
-							attributeOverride = attributeOverrides.get( tmp );
-						}
+					for ( BasicAttribute attribute : embeddableClass.getSimpleAttributes().values() ) {
 						attribute.setNaturalIdMutability( embeddableClass.getNaturalIdMutability() );
-						attributeList.add( new SingularAttributeSourceImpl( attribute, attributeOverride ) );
+						attributeList.add( new SingularAttributeSourceImpl( attribute ) );
 					}
 					for ( EmbeddableClass embeddable : embeddableClass.getEmbeddedClasses().values() ) {
 						embeddable.setNaturalIdMutability( embeddableClass.getNaturalIdMutability() );
@@ -137,12 +129,11 @@ public class ComponentAttributeSourceImpl implements ComponentAttributeSource {
 								new ComponentAttributeSourceImpl(
 										embeddable,
 										getPath(),
-										createAggregatedOverrideMap(),
 										classAccessType
 								)
 						);
 					}
-					for ( AssociationAttribute associationAttribute : embeddableClass.getAssociationAttributes() ) {
+					for ( AssociationAttribute associationAttribute : embeddableClass.getAssociationAttributes().values() ) {
 						associationAttribute.setNaturalIdMutability( embeddableClass.getNaturalIdMutability() );
 					}
 					SourceHelper.resolveAssociationAttributes( embeddableClass, attributeList );
@@ -174,7 +165,7 @@ public class ComponentAttributeSourceImpl implements ComponentAttributeSource {
 
 	@Override
 	public String getContainingTableName() {
-		return null;  //To change body of implemented methods use File | Settings | File Templates.
+		return null;
 	}
 
 	@Override
@@ -233,19 +224,4 @@ public class ComponentAttributeSourceImpl implements ComponentAttributeSource {
 		return sb.toString();
 	}
 
-	private Map<String, AttributeOverride> createAggregatedOverrideMap() {
-		// add all overrides passed down to this instance - they override overrides ;-) which are defined further down
-		// the embeddable chain
-		Map<String, AttributeOverride> aggregatedOverrideMap = new HashMap<String, AttributeOverride>(
-				attributeOverrides
-		);
-
-		for ( Map.Entry<String, AttributeOverride> entry : embeddableClass.getAttributeOverrideMap().entrySet() ) {
-			String fullPath = getPath() + PATH_SEPARATOR + entry.getKey();
-			if ( !aggregatedOverrideMap.containsKey( fullPath ) ) {
-				aggregatedOverrideMap.put( fullPath, entry.getValue() );
-			}
-		}
-		return aggregatedOverrideMap;
-	}
 }

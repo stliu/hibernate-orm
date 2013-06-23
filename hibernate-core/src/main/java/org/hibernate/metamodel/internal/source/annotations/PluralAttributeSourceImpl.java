@@ -181,7 +181,7 @@ public class PluralAttributeSourceImpl implements PluralAttributeSource, Orderab
 						new ManyToManyPluralAttributeElementSourceImpl( ownerAttributeSource, associationAttribute, true ) :
 						new OneToManyPluralAttributeElementSourceImpl( ownerAttributeSource, associationAttribute );
 			case ELEMENT_COLLECTION_BASIC:
-				return new BasicPluralAttributeElementSourceImpl( associationAttribute );
+				return new BasicPluralAttributeElementSourceImpl( associationAttribute, entityClass );
 			case ELEMENT_COLLECTION_EMBEDDABLE: {
 				// TODO: cascadeStyles?
 				return new CompositePluralAttributeElementSourceImpl(

@@ -45,7 +45,7 @@ public class SourceHelper {
 	 * @param attributeList Attribute source container, can't be <code>null</code>.
 	 */
 	public static void resolveAssociationAttributes(ConfiguredClass configuredClass, List<AttributeSource> attributeList) {
-		for ( AssociationAttribute associationAttribute : configuredClass.getAssociationAttributes() ) {
+		for ( AssociationAttribute associationAttribute : configuredClass.getAssociationAttributes().values() ) {
 			switch ( associationAttribute.getNature() ) {
 				case ONE_TO_ONE:
 				case MANY_TO_ONE: {

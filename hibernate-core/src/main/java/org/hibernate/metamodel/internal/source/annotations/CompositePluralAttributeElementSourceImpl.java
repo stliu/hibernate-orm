@@ -43,9 +43,6 @@ import org.hibernate.metamodel.spi.source.MetaAttributeSource;
  * @author Brett Meyer
  */
 public class CompositePluralAttributeElementSourceImpl implements CompositePluralAttributeElementSource {
-
-	private static final String PATH_SEPARATOR = ".";
-	
 	private final AssociationAttribute associationAttribute;
 	private final ConfiguredClass entityClass;
 	
@@ -126,18 +123,13 @@ public class CompositePluralAttributeElementSourceImpl implements CompositePlura
 		EmbeddableClass embeddableClass = entityClass
 				.getCollectionEmbeddedClasses()
 				.get( associationAttribute.getName() );
-		
+
 		parentReferenceAttributeName = embeddableClass.getParentReferencingAttributeName();
-		
+
 		// TODO: Duplicates code in ComponentAttributeSourceImpl.
-		for ( BasicAttribute attribute : embeddableClass.getSimpleAttributes() ) {
-			AttributeOverride attributeOverride = null;
-			String tmp = getPath() + PATH_SEPARATOR + attribute.getName();
-			if ( entityClass.getAttributeOverrideMap().containsKey( tmp ) ) {
-				attributeOverride = entityClass.getAttributeOverrideMap().get( tmp );
-			}
+		for ( BasicAttribute attribute : embeddableClass.getSimpleAttributes().values() ) {
 			attribute.setNaturalIdMutability( embeddableClass.getNaturalIdMutability() );
-			attributeSources.add( new SingularAttributeSourceImpl( attribute, attributeOverride ) );
+			attributeSources.add( new SingularAttributeSourceImpl( attribute ) );
 		}
 		for ( EmbeddableClass embeddable : embeddableClass.getEmbeddedClasses().values() ) {
 			embeddable.setNaturalIdMutability( embeddableClass.getNaturalIdMutability() );
@@ -145,33 +137,13 @@ public class CompositePluralAttributeElementSourceImpl implements CompositePlura
 					new ComponentAttributeSourceImpl(
 							embeddable,
 							getPath(),
-							createAggregatedOverrideMap( embeddableClass, entityClass.getAttributeOverrideMap() ),
 							embeddableClass.getClassAccessType()
 					)
 			);
 		}
-		for ( AssociationAttribute associationAttribute : embeddableClass.getAssociationAttributes() ) {
+		for ( AssociationAttribute associationAttribute : embeddableClass.getAssociationAttributes().values() ) {
 			associationAttribute.setNaturalIdMutability( embeddableClass.getNaturalIdMutability() );
 		}
 		SourceHelper.resolveAssociationAttributes( embeddableClass, attributeSources );
 	}
-
-	private Map<String, AttributeOverride> createAggregatedOverrideMap(
-			EmbeddableClass embeddableClass,
-			Map<String, AttributeOverride> attributeOverrides) {
-		// add all overrides passed down to this instance - they override overrides ;-) which are defined further down
-		// the embeddable chain
-		Map<String, AttributeOverride> aggregatedOverrideMap = new HashMap<String, AttributeOverride>(
-				attributeOverrides
-		);
-
-		for ( Map.Entry<String, AttributeOverride> entry : embeddableClass.getAttributeOverrideMap().entrySet() ) {
-			String fullPath = getPath() + PATH_SEPARATOR + entry.getKey();
-			if ( !aggregatedOverrideMap.containsKey( fullPath ) ) {
-				aggregatedOverrideMap.put( fullPath, entry.getValue() );
-			}
-		}
-		return aggregatedOverrideMap;
-	}
-
 }

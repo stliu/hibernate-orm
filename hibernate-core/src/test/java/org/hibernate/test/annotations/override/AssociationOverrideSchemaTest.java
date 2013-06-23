@@ -19,7 +19,6 @@ import static org.junit.Assert.assertNotNull;
  */
 @RequiresDialect({ H2Dialect.class })
 @TestForIssue(jiraKey = "HHH-6662")
-@FailureExpectedWithNewMetamodel
 public class AssociationOverrideSchemaTest extends BaseCoreFunctionalTestCase {
 	public static final String SCHEMA_NAME = "OTHER_SCHEMA";
 	public static final String TABLE_NAME = "BLOG_TAGS";

@@ -23,40 +23,38 @@
  */
 package org.hibernate.metamodel.internal.source.annotations;
 
-import org.hibernate.metamodel.internal.source.annotations.entity.RootEntityClass;
-import org.hibernate.metamodel.spi.source.DiscriminatorSource;
-import org.hibernate.metamodel.spi.source.RelationalValueSource;
+import org.hibernate.metamodel.internal.source.annotations.attribute.BasicAttribute;
+import org.hibernate.metamodel.internal.source.annotations.attribute.Column;
 
 /**
  * @author Hardy Ferentschik
  */
-public class DiscriminatorSourceImpl implements DiscriminatorSource {
-	private final RootEntityClass entityClass;
+public class BasicColumnSourceImpl extends ColumnSourceImpl {
+	private final String readFragement;
+	private final String writeFragement;
+	private final String checkCondition;
 
-	public DiscriminatorSourceImpl(RootEntityClass entityClass) {
-		this.entityClass = entityClass;
+
+	BasicColumnSourceImpl(BasicAttribute attribute, Column column) {
+		super( column );
+		this.readFragement = attribute != null ? attribute.getCustomReadFragment() : null;
+		this.writeFragement = attribute != null ? attribute.getCustomWriteFragment() : null;
+		this.checkCondition = attribute != null ? attribute.getCheckCondition() : null;
 	}
 
 	@Override
-	public boolean isForced() {
-		return entityClass.isDiscriminatorForced();
+	public String getReadFragment() {
+		return readFragement;
 	}
 
 	@Override
-	public boolean isInserted() {
-		return entityClass.isDiscriminatorIncludedInSql();
+	public String getWriteFragment() {
+		return writeFragement;
 	}
 
 	@Override
-	public RelationalValueSource getDiscriminatorRelationalValueSource() {
-		return entityClass.getDiscriminatorFormula() != null ?
-				new DerivedValueSourceImpl( entityClass.getDiscriminatorFormula() )
-				: new ColumnSourceImpl( entityClass.getDiscriminatorColumnValues() );
-	}
-
-	@Override
-	public String getExplicitHibernateTypeName() {
-		return entityClass.getDiscriminatorType().getName();
+	public String getCheckCondition() {
+		return checkCondition;
 	}
 }
 

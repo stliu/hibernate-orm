@@ -21,43 +21,24 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.internal.source.annotations;
+package org.hibernate.metamodel.internal.source.annotations.attribute;
 
-import org.hibernate.metamodel.internal.source.annotations.entity.RootEntityClass;
-import org.hibernate.metamodel.spi.source.DiscriminatorSource;
-import org.hibernate.metamodel.spi.source.RelationalValueSource;
+import org.jboss.jandex.AnnotationInstance;
 
 /**
- * @author Hardy Ferentschik
+ * @author Strong Liu <stliu@hibernate.org>
  */
-public class DiscriminatorSourceImpl implements DiscriminatorSource {
-	private final RootEntityClass entityClass;
+public class AssociationOverride extends AbstractOverrideDefinition {
+	public AssociationOverride(String pathPrefix, AnnotationInstance annotation) {
 
-	public DiscriminatorSourceImpl(RootEntityClass entityClass) {
-		this.entityClass = entityClass;
 	}
 
 	@Override
-	public boolean isForced() {
-		return entityClass.isDiscriminatorForced();
+	public void apply(MappedAttribute mappedAttribute) {
 	}
 
 	@Override
-	public boolean isInserted() {
-		return entityClass.isDiscriminatorIncludedInSql();
-	}
-
-	@Override
-	public RelationalValueSource getDiscriminatorRelationalValueSource() {
-		return entityClass.getDiscriminatorFormula() != null ?
-				new DerivedValueSourceImpl( entityClass.getDiscriminatorFormula() )
-				: new ColumnSourceImpl( entityClass.getDiscriminatorColumnValues() );
-	}
-
-	@Override
-	public String getExplicitHibernateTypeName() {
-		return entityClass.getDiscriminatorType().getName();
+	public String getAttributePath() {
+		return null;
 	}
 }
-
-

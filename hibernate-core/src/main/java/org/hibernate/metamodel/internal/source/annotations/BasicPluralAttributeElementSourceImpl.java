@@ -6,6 +6,7 @@ import java.util.List;
 import org.hibernate.metamodel.internal.source.annotations.attribute.Column;
 import org.hibernate.metamodel.internal.source.annotations.attribute.MappedAttribute;
 import org.hibernate.metamodel.internal.source.annotations.attribute.PluralAssociationAttribute;
+import org.hibernate.metamodel.internal.source.annotations.entity.ConfiguredClass;
 import org.hibernate.metamodel.spi.source.BasicPluralAttributeElementSource;
 import org.hibernate.metamodel.spi.source.ExplicitHibernateTypeSource;
 import org.hibernate.metamodel.spi.source.RelationalValueSource;
@@ -15,9 +16,15 @@ import org.hibernate.metamodel.spi.source.RelationalValueSource;
  */
 public class BasicPluralAttributeElementSourceImpl implements BasicPluralAttributeElementSource {
 	private final PluralAssociationAttribute associationAttribute;
+	private final ConfiguredClass entityClass;
+	private final Nature nature;
 
-	public BasicPluralAttributeElementSourceImpl(PluralAssociationAttribute associationAttribute) {
+	public BasicPluralAttributeElementSourceImpl(
+			final PluralAssociationAttribute associationAttribute,
+			final ConfiguredClass entityClass) {
 		this.associationAttribute = associationAttribute;
+		this.entityClass = entityClass;
+		this.nature = resolveNature( associationAttribute );
 	}
 
 	@Override
@@ -27,16 +34,20 @@ public class BasicPluralAttributeElementSourceImpl implements BasicPluralAttribu
 
 	@Override
 	public Nature getNature() {
-		if ( MappedAttribute.Nature.ELEMENT_COLLECTION_BASIC.equals( associationAttribute.getNature() ) ) {
-			return Nature.BASIC;
-		}
-		else if ( MappedAttribute.Nature.ELEMENT_COLLECTION_EMBEDDABLE.equals( associationAttribute.getNature() ) ) {
-			return Nature.AGGREGATE;
-		}
-		else {
-			throw new AssertionError(
-					"Wrong attribute nature for a element collection attribute: " + associationAttribute.getNature()
-			);
+		return nature;
+	}
+
+	private static Nature resolveNature(PluralAssociationAttribute attribute){
+		switch ( attribute.getNature() ){
+			case ELEMENT_COLLECTION_BASIC:
+				return Nature.BASIC;
+			case ELEMENT_COLLECTION_EMBEDDABLE:
+				return Nature.AGGREGATE;
+			default:
+				throw new AssertionError(
+						"Wrong attribute nature for a element collection attribute: " + attribute.getNature()
+				);
+
 		}
 	}
 
@@ -45,7 +56,7 @@ public class BasicPluralAttributeElementSourceImpl implements BasicPluralAttribu
 		List<RelationalValueSource> valueSources = new ArrayList<RelationalValueSource>();
 		if ( !associationAttribute.getColumnValues().isEmpty() ) {
 			for ( Column columnValues : associationAttribute.getColumnValues() ) {
-				valueSources.add( new ColumnSourceImpl( associationAttribute, null, columnValues ) );
+				valueSources.add( new ColumnSourceImpl( columnValues ) );
 			}
 		}
 		return valueSources;

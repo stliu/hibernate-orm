@@ -73,8 +73,7 @@ public class ManyToManyPluralAttributeElementSourceImpl implements ManyToManyPlu
 		this.isUnique = isUnique;
 
 		for ( Column column : associationAttribute.getInverseJoinColumnValues() ) {
-			relationalValueSources.add( new ColumnSourceImpl( 
-					associationAttribute, null, column ) );
+			relationalValueSources.add( new ColumnSourceImpl( column ) );
 			if ( column.getReferencedColumnName() != null ) {
 				referencedColumnNames.add( column.getReferencedColumnName() );
 			}

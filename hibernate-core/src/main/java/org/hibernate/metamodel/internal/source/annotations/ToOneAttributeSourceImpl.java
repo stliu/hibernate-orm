@@ -107,7 +107,7 @@ public class ToOneAttributeSourceImpl extends SingularAttributeSourceImpl implem
 					associationAttribute.getNature(), associationAttribute.getRole() ));
 		}
 	}
-
+	@Override
 	public Nature resolveToOneAttributeSourceNature(ToOneAttributeSourceNatureResolver.ToOneAttributeSourceNatureResolutionContext context) {
 		if ( nature != null ) { return nature; }
 		final List<org.hibernate.metamodel.spi.relational.Column> idColumns = context.getIdentifierColumns();
@@ -193,8 +193,8 @@ public class ToOneAttributeSourceImpl extends SingularAttributeSourceImpl implem
 				associationAttribute.getJoinColumnValues()
 						.size()
 		);
-		for ( Column columnValues : associationAttribute.getJoinColumnValues() ) {
-			valueSources.add( new ColumnSourceImpl( associationAttribute, null, columnValues ) );
+		for ( Column column : associationAttribute.getJoinColumnValues() ) {
+			valueSources.add( new ColumnSourceImpl( column ) );
 		}
 		return valueSources;
 	}

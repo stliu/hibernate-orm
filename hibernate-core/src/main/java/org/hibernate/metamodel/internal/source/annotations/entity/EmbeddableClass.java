@@ -26,7 +26,10 @@ package org.hibernate.metamodel.internal.source.annotations.entity;
 import javax.persistence.AccessType;
 
 import org.jboss.jandex.AnnotationInstance;
+import org.jboss.jandex.AnnotationTarget;
 import org.jboss.jandex.ClassInfo;
+import org.jboss.jandex.FieldInfo;
+import org.jboss.jandex.MethodInfo;
 
 import org.hibernate.metamodel.internal.source.annotations.AnnotationBindingContext;
 import org.hibernate.metamodel.internal.source.annotations.util.HibernateDotNames;
@@ -53,7 +56,7 @@ public class EmbeddableClass extends ConfiguredClass {
 			SingularAttributeBinding.NaturalIdMutability naturalIdMutability,
 			String customTuplizerClass,
 			AnnotationBindingContext context) {
-		super( classInfo, defaultAccessType, parent, context );
+		super( classInfo, defaultAccessType, parent, embeddedAttributeName, context );
 		this.embeddedAttributeName = embeddedAttributeName;
 		this.naturalIdMutability = naturalIdMutability;
 		this.parentReferencingAttributeName = checkParentAnnotation();
@@ -87,6 +90,8 @@ public class EmbeddableClass extends ConfiguredClass {
 	public String getCustomTuplizerClass() {
 		return customTuplizerClass;
 	}
+
+
 }
 
 

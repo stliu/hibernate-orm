@@ -29,6 +29,7 @@ import org.hibernate.AssertionFailure;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.metamodel.internal.source.annotations.util.JPADotNames;
 import org.hibernate.metamodel.internal.source.annotations.util.JandexHelper;
+import org.hibernate.metamodel.spi.source.MappingException;
 
 /**
  * Contains the information about a single {@link javax.persistence.AttributeOverride}. Instances of this class
@@ -37,9 +38,10 @@ import org.hibernate.metamodel.internal.source.annotations.util.JandexHelper;
  * @author Hardy Ferentschik
  * @todo Take care of prefixes of the form 'element', 'key' and 'value'. Add another type enum to handle this. (HF)
  */
-public class AttributeOverride {
+public class AttributeOverride extends AbstractOverrideDefinition{
 	private static final String PROPERTY_PATH_SEPARATOR = ".";
-	private final Column columnValues;
+	private final Column column;
+	private final AnnotationInstance columnAnnotation;
 	private final String attributePath;
 
 	public AttributeOverride(AnnotationInstance attributeOverrideAnnotation) {
@@ -55,32 +57,39 @@ public class AttributeOverride {
 			throw new AssertionFailure( "A @AttributeOverride annotation needs to be passed to the constructor" );
 		}
 
-		columnValues = new Column(
-				JandexHelper.getValue(
-						attributeOverrideAnnotation,
-						"column",
-						AnnotationInstance.class
-				)
-		);
-		attributePath = createAttributePath(
+		this.columnAnnotation= JandexHelper.getValue( attributeOverrideAnnotation, "column", AnnotationInstance.class );
+		this.column = new Column( columnAnnotation );
+		this.attributePath = createAttributePath(
 				prefix,
 				JandexHelper.getValue( attributeOverrideAnnotation, "name", String.class )
 		);
 	}
 
-	public Column getColumnValues() {
-		return columnValues;
+	public Column getColumnValue() {
+		return column;
 	}
-
+	@Override
 	public String getAttributePath() {
 		return attributePath;
+	}
+
+	@Override
+	public void apply(MappedAttribute mappedAttribute) {
+		int columnSize = mappedAttribute.getColumnValues().size();
+		switch ( columnSize ){
+			case 0:
+				mappedAttribute.getColumnValues().add( column );
+				break;
+			case 1:
+				mappedAttribute.getColumnValues().get( 0 ).applyColumnValues( columnAnnotation );
+		}
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append( "AttributeOverride" );
-		sb.append( "{columnValues=" ).append( columnValues );
+		sb.append( "{column=" ).append( column );
 		sb.append( ", attributePath='" ).append( attributePath ).append( '\'' );
 		sb.append( '}' );
 		return sb.toString();
@@ -100,7 +109,7 @@ public class AttributeOverride {
 		if ( attributePath != null ? !attributePath.equals( that.attributePath ) : that.attributePath != null ) {
 			return false;
 		}
-		if ( columnValues != null ? !columnValues.equals( that.columnValues ) : that.columnValues != null ) {
+		if ( column != null ? !column.equals( that.column ) : that.column != null ) {
 			return false;
 		}
 
@@ -109,12 +118,15 @@ public class AttributeOverride {
 
 	@Override
 	public int hashCode() {
-		int result = columnValues != null ? columnValues.hashCode() : 0;
+		int result = column != null ? column.hashCode() : 0;
 		result = 31 * result + ( attributePath != null ? attributePath.hashCode() : 0 );
 		return result;
 	}
 
-	private String createAttributePath(String prefix, String name) {
+	private static String createAttributePath(String prefix, String name) {
+		if ( StringHelper.isEmpty( name ) ) {
+			throw new AssertionFailure( "name attribute in @AttributeOverride can't be empty" );
+		}
 		String path = "";
 		if ( StringHelper.isNotEmpty( prefix ) ) {
 			path += prefix;

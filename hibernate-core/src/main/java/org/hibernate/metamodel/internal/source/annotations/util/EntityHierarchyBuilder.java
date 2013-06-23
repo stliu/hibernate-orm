@@ -41,19 +41,23 @@ import org.jboss.jandex.MethodInfo;
 import org.jboss.logging.Logger;
 
 import org.hibernate.AnnotationException;
-import org.hibernate.boot.registry.classloading.spi.ClassLoaderService;
+import org.hibernate.MappingException;
+import org.hibernate.internal.util.StringHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.metamodel.internal.source.annotations.AnnotationBindingContext;
 import org.hibernate.metamodel.internal.source.annotations.EntityHierarchyImpl;
 import org.hibernate.metamodel.internal.source.annotations.JoinedSubclassEntitySourceImpl;
 import org.hibernate.metamodel.internal.source.annotations.RootEntitySourceImpl;
 import org.hibernate.metamodel.internal.source.annotations.SubclassEntitySourceImpl;
+import org.hibernate.metamodel.internal.source.annotations.attribute.AttributeOverride;
+import org.hibernate.metamodel.internal.source.annotations.attribute.MappedAttribute;
+import org.hibernate.metamodel.internal.source.annotations.entity.ConfiguredClass;
+import org.hibernate.metamodel.internal.source.annotations.entity.EmbeddableClass;
 import org.hibernate.metamodel.internal.source.annotations.entity.EntityClass;
 import org.hibernate.metamodel.internal.source.annotations.entity.RootEntityClass;
 import org.hibernate.metamodel.spi.binding.InheritanceType;
 import org.hibernate.metamodel.spi.source.EntityHierarchy;
 import org.hibernate.metamodel.spi.source.EntitySource;
-import org.hibernate.metamodel.spi.source.MappingException;
 import org.hibernate.metamodel.spi.source.SubclassEntitySource;
 
 /**
@@ -78,7 +82,7 @@ public class EntityHierarchyBuilder {
 	public static Set<EntityHierarchy> createEntityHierarchies(AnnotationBindingContext bindingContext) {
 		Set<EntityHierarchy> hierarchies = new HashSet<EntityHierarchy>();
 
-		List<DotName> processedEntities = new ArrayList<DotName>();
+		Set<DotName> processedEntities = new HashSet<DotName>();
 		Map<DotName, List<ClassInfo>> classToDirectSubClassMap = new HashMap<DotName, List<ClassInfo>>();
 		IndexView index = bindingContext.getIndex();
 		for ( ClassInfo classInfo : index.getKnownClasses() ) {
@@ -134,18 +138,72 @@ public class EntityHierarchyBuilder {
 					rootSource
 			);
 
-
+			applyOverrides( rootSource );
 			hierarchies.add( new EntityHierarchyImpl( rootSource, hierarchyInheritanceType ) );
 		}
 		return hierarchies;
 	}
 
-	private static void addSubclassEntitySources(AnnotationBindingContext bindingContext,
-												 Map<DotName, List<ClassInfo>> classToDirectSubClassMap,
-												 AccessType defaultAccessType,
-												 InheritanceType hierarchyInheritanceType,
-												 EntityClass entityClass,
-												 EntitySource entitySource) {
+	private static void applyOverrides(RootEntitySourceImpl rootSource) {
+		applyOverrides( rootSource.getEntityClass() );
+		for ( SubclassEntitySource subclassEntitySource : rootSource.subclassEntitySources() ) {
+			applyOverrides( ( (SubclassEntitySourceImpl) subclassEntitySource ).getEntityClass() );
+		}
+	}
+
+	private static void applyOverrides(ConfiguredClass entityClass) {
+		Map<String, AttributeOverride> map = entityClass.getAttributeOverrideMap();
+		for ( Map.Entry<String, AttributeOverride> entry : map.entrySet() ) {
+			String key = entry.getKey();
+			AttributeOverride override = entry.getValue();
+			MappedAttribute attribute = resolveBasicAttributeByPath( entityClass, key );
+			if(attribute != null){
+				override.apply( attribute );
+			}
+
+		}
+	}
+
+	private static MappedAttribute resolveBasicAttributeByPath(ConfiguredClass configuredClass, String path) {
+		if ( path.contains( "." ) ) {
+			String perfix = StringHelper.root( path );
+			EmbeddableClass embeddableClass = configuredClass.getEmbeddedClasses().get( perfix );
+			if ( embeddableClass == null ) {
+				throwAttributeNotFoundException( configuredClass, perfix );
+			}
+			return resolveBasicAttributeByPath( embeddableClass, StringHelper.unroot( path ) );
+		}
+		else {
+
+			MappedAttribute mappedAttribute = configuredClass.getSimpleAttributes().get( path );
+			if ( mappedAttribute != null ) {
+				return mappedAttribute;
+			}
+			mappedAttribute = configuredClass.getIdAttributes().get( path );
+			if ( mappedAttribute != null ) {
+				return mappedAttribute;
+			}
+			mappedAttribute = configuredClass.getAssociationAttributes().get( path );
+			if ( mappedAttribute != null ) {
+				return mappedAttribute;
+			}
+			throwAttributeNotFoundException( configuredClass, path );
+		}
+		return null;
+	}
+
+	private static void throwAttributeNotFoundException(ConfiguredClass configuredClass, String path) {
+		throw new MappingException( "can't find attribute  by path: " + path );
+	}
+
+
+	private static void addSubclassEntitySources(
+			AnnotationBindingContext bindingContext,
+			Map<DotName, List<ClassInfo>> classToDirectSubClassMap,
+			AccessType defaultAccessType,
+			InheritanceType hierarchyInheritanceType,
+			EntityClass entityClass,
+			EntitySource entitySource) {
 		List<ClassInfo> subClassInfoList = classToDirectSubClassMap.get( DotName.createSimple( entitySource.getClassName() ) );
 		if ( subClassInfoList == null ) {
 			return;
@@ -244,7 +302,7 @@ public class EntityHierarchyBuilder {
 	private static void processHierarchy(AnnotationBindingContext bindingContext,
 										 ClassInfo classInfo,
 										 List<ClassInfo> rootClassWithAllSubclasses,
-										 List<DotName> processedEntities,
+										 Set<DotName> processedEntities,
 										 Map<DotName, List<ClassInfo>> classToDirectSubclassMap) {
 		processedEntities.add( classInfo.name() );
 		rootClassWithAllSubclasses.add( classInfo );

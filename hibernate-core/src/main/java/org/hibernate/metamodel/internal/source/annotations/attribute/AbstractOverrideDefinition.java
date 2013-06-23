@@ -21,31 +21,14 @@
  * 51 Franklin Street, Fifth Floor
  * Boston, MA  02110-1301  USA
  */
-package org.hibernate.metamodel.internal.source.annotations;
-
-import org.hibernate.metamodel.internal.source.annotations.entity.EntityClass;
-import org.hibernate.metamodel.spi.source.EntitySource;
-import org.hibernate.metamodel.spi.source.SubclassEntitySource;
+package org.hibernate.metamodel.internal.source.annotations.attribute;
 
 /**
- * @author Hardy Ferentschik
- * @author Strong Liu
+ * @author Strong Liu <stliu@hibernate.org>
  */
-public class SubclassEntitySourceImpl extends EntitySourceImpl implements SubclassEntitySource {
+public abstract class AbstractOverrideDefinition {
 
-	private final EntitySource container;
+	public abstract String getAttributePath();
 
-	public SubclassEntitySourceImpl(
-			final EntityClass entityClass,
-			final EntitySource container) {
-		super( entityClass );
-		this.container = container;
-	}
-
-	@Override
-	public EntitySource superclassEntitySource() {
-		return container;
-	}
+	public abstract void apply(MappedAttribute mappedAttribute);
 }
-
-
