@@ -156,25 +156,30 @@ public class EntityHierarchyBuilder {
 		for ( Map.Entry<String, AttributeOverride> entry : map.entrySet() ) {
 			String key = entry.getKey();
 			AttributeOverride override = entry.getValue();
-			MappedAttribute attribute = resolveBasicAttributeByPath( entityClass, key );
-			if(attribute != null){
+			MappedAttribute attribute = resolveAttributeByPath( entityClass, key );
+			if ( attribute != null ) {
 				override.apply( attribute );
 			}
 
 		}
 	}
 
-	private static MappedAttribute resolveBasicAttributeByPath(ConfiguredClass configuredClass, String path) {
-		if ( path.contains( "." ) ) {
-			String perfix = StringHelper.root( path );
+	/**
+	 *
+	 */
+	private static MappedAttribute resolveAttributeByPath(ConfiguredClass configuredClass, String path) {
+		if ( path == null || configuredClass == null )return null;
+		int loc = path.indexOf( "." );
+		if ( loc > 0 ) {
+			String perfix = path.substring( 0, loc );
+			String postfix = path.substring( loc+1, path.length() );
 			EmbeddableClass embeddableClass = configuredClass.getEmbeddedClasses().get( perfix );
 			if ( embeddableClass == null ) {
 				throwAttributeNotFoundException( configuredClass, perfix );
 			}
-			return resolveBasicAttributeByPath( embeddableClass, StringHelper.unroot( path ) );
+			return resolveAttributeByPath( embeddableClass, postfix );
 		}
 		else {
-
 			MappedAttribute mappedAttribute = configuredClass.getSimpleAttributes().get( path );
 			if ( mappedAttribute != null ) {
 				return mappedAttribute;
@@ -193,7 +198,7 @@ public class EntityHierarchyBuilder {
 	}
 
 	private static void throwAttributeNotFoundException(ConfiguredClass configuredClass, String path) {
-		throw new MappingException( "can't find attribute  by path: " + path );
+		throw new MappingException( "can't find attribute with path: " + path + " from class: " + configuredClass.getName() );
 	}
 
 

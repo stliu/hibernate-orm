@@ -175,7 +175,7 @@ public class ConfiguredClass {
 		this.localBindingContext = new EntityBindingContext( context, this );
 		this.isAbstract = ReflectHelper.isAbstractClass( this.clazz );
 		this.classAccessType = determineClassAccessType( defaultAccessType );
-		this.customTuplizer = AnnotationParserHelper.determineCustomTuplizer( classInfo.annotations() );
+		this.customTuplizer = AnnotationParserHelper.determineCustomTuplizer( classInfo.annotations(), classInfo );
 		this.simpleAttributeMap = new TreeMap<String, BasicAttribute>();
 		this.idAttributeMap = new TreeMap<String, MappedAttribute>();
 		this.associationAttributeMap = new TreeMap<String, AssociationAttribute>();
@@ -477,7 +477,7 @@ public class ConfiguredClass {
 
 	private void createMappedAttribute(Member member, ResolvedTypeWithMembers resolvedType, AccessType accessType) {
 		final String attributeName = ReflectHelper.getPropertyName( member );
-		final ResolvedMember[] resolvedMembers = accessType == AccessType.FIELD ? resolvedType.getMemberFields() : resolvedType
+		final ResolvedMember[] resolvedMembers = Field.class.isInstance( member ) ? resolvedType.getMemberFields() : resolvedType
 				.getMemberMethods();
 		ResolvedMember resolvedMember = findResolvedMember( member.getName(), resolvedMembers );
 		final Map<DotName, List<AnnotationInstance>> annotations = JandexHelper.getMemberAnnotations(

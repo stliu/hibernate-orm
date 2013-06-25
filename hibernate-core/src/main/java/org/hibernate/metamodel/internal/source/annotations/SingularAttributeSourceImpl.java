@@ -99,22 +99,16 @@ public class SingularAttributeSourceImpl implements SingularAttributeSource {
 					List<RelationalValueSource> valueSources = new ArrayList<RelationalValueSource>();
 					boolean hasDefinedColumnSource = !attribute.getColumnValues().isEmpty();
 					if ( hasDefinedColumnSource ) {
-						if ( attribute.getNature() == MappedAttribute.Nature.BASIC ) {
-							valueSources.add(
-									new BasicColumnSourceImpl(
-											(BasicAttribute) attribute, attribute.getColumnValues().get( 0 )
-									)
-							);
-						}
-						else {
-							for ( Column columnValues : attribute.getColumnValues() ) {
-
-								valueSources.add( new ColumnSourceImpl( columnValues ) );
-							}
+						for ( Column columnValues : attribute.getColumnValues() ) {
+							valueSources.add( new ColumnSourceImpl( attribute, columnValues ) );
 						}
 					}
 					else if ( attribute.getFormulaValue() != null ) {
 						valueSources.add( new DerivedValueSourceImpl( attribute.getFormulaValue() ) );
+					}
+					else if ( attribute.getNature() == MappedAttribute.Nature.BASIC ) {
+						//for column transformer
+						valueSources.add( new ColumnSourceImpl( attribute, null ) );
 					}
 					return valueSources;
 				}

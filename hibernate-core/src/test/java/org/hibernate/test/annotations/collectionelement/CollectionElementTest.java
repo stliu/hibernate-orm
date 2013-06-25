@@ -28,7 +28,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -41,7 +40,6 @@ import org.hibernate.metamodel.spi.binding.PluralAttributeBinding;
 import org.hibernate.metamodel.spi.relational.TableSpecification;
 import org.hibernate.test.annotations.Country;
 import org.hibernate.test.util.SchemaUtil;
-import org.hibernate.testing.FailureExpectedWithNewMetamodel;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.junit.Test;
 
@@ -62,8 +60,8 @@ public class CollectionElementTest extends BaseCoreFunctionalTestCase {
 		boy.setLastName( "Doe" );
 		boy.getNickNames().add( "Johnny" );
 		boy.getNickNames().add( "Thing" );
-		boy.getScorePerNickName().put( "Johnny", Integer.valueOf( 3 ) );
-		boy.getScorePerNickName().put( "Thing", Integer.valueOf( 5 ) );
+		boy.getScorePerNickName().put( "Johnny", 3 );
+		boy.getScorePerNickName().put( "Thing", 5 );
 		int[] favNbrs = new int[4];
 		for (int index = 0; index < favNbrs.length - 1; index++) {
 			favNbrs[index] = index * 3;
@@ -102,7 +100,6 @@ public class CollectionElementTest extends BaseCoreFunctionalTestCase {
 	}
 
 	@Test
-	@FailureExpectedWithNewMetamodel( message = "AttributeOverride for embeddable not working.")
 	public void testCompositeElement() throws Exception {
 		Session s = openSession();
 		s.getTransaction().begin();
@@ -169,8 +166,8 @@ public class CollectionElementTest extends BaseCoreFunctionalTestCase {
 		boy.setLastName( "Doe" );
 		boy.getNickNames().add( "Johnny" );
 		boy.getNickNames().add( "Thing" );
-		boy.getScorePerNickName().put( "Johnny", new Integer( 3 ) );
-		boy.getScorePerNickName().put( "Thing", new Integer( 5 ) );
+		boy.getScorePerNickName().put( "Johnny", 3 );
+		boy.getScorePerNickName().put( "Thing", 5 );
 		int[] favNbrs = new int[4];
 		for (int index = 0; index < favNbrs.length - 1; index++) {
 			favNbrs[index] = index * 3;
@@ -274,7 +271,10 @@ public class CollectionElementTest extends BaseCoreFunctionalTestCase {
 	protected Class[] getAnnotatedClasses() {
 		return new Class[] {
 				Boy.class,
+				Toy.class,
+				Brand.class,
 				Country.class,
+				CountryAttitude.class,
 				TestCourse.class,
 				Matrix.class
 		};

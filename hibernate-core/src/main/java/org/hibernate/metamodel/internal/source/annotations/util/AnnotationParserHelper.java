@@ -42,6 +42,7 @@ import org.hibernate.metamodel.spi.binding.SingularAttributeBinding;
 
 import com.fasterxml.classmate.members.ResolvedMember;
 import org.jboss.jandex.AnnotationInstance;
+import org.jboss.jandex.AnnotationTarget;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 
@@ -90,19 +91,24 @@ public class AnnotationParserHelper {
 		return new CustomSQL( sql, isCallable, checkStyle );
 	}
 
-	public static String determineCustomTuplizer(Map<DotName, List<AnnotationInstance>> annotations){
+	public static String determineCustomTuplizer(Map<DotName, List<AnnotationInstance>> annotations, AnnotationTarget target){
 		//tuplizer on field
 		final AnnotationInstance tuplizersAnnotation = JandexHelper.getSingleAnnotation(
-				annotations, HibernateDotNames.TUPLIZERS
+				annotations, HibernateDotNames.TUPLIZERS, target
 		);
 		final AnnotationInstance tuplizerAnnotation = JandexHelper.getSingleAnnotation(
 				annotations,
-				HibernateDotNames.TUPLIZER
+				HibernateDotNames.TUPLIZER,
+				target
 		);
 		return determineCustomTuplizer(
 				tuplizersAnnotation,
 				tuplizerAnnotation
 		);
+	}
+
+	public static String determineCustomTuplizer(Map<DotName, List<AnnotationInstance>> annotations){
+		return determineCustomTuplizer( annotations, null );
 	}
 
 	public static String determineCustomTuplizer(

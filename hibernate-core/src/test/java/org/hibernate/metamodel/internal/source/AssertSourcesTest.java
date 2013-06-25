@@ -144,7 +144,7 @@ public class AssertSourcesTest extends BaseUnitTestCase {
 
 		// todo : return collections?  or iterables?
 		// todo : empty collections?  or null?
-		assertEquals( 0, identifierAttributeSource.relationalValueSources().size() );
+		assertEquals( 1, identifierAttributeSource.relationalValueSources().size() );
 //		RelationalValueSource relationalValueSource = identifierAttributeSource.relationalValueSources().get( 0 );
 //		assertNull( relationalValueSource.getContainingTableName() );
 //		assertEquals( RelationalValueSource.Nature.COLUMN, relationalValueSource.getNature() );

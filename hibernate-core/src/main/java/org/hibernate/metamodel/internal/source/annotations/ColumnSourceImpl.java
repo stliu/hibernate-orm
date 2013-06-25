@@ -37,8 +37,19 @@ import org.hibernate.metamodel.spi.source.SizeSource;
  */
 public class ColumnSourceImpl implements ColumnSource {
 	private final Column columnValues;
+	private final String readFragement;
+	private final String writeFragement;
+	private final String checkCondition;
 
 	public ColumnSourceImpl(Column columnValues) {
+		this( null, columnValues );
+	}
+
+	public ColumnSourceImpl(MappedAttribute attribute, Column columnValues) {
+		boolean isBasicAttribute = attribute != null && attribute.getNature() == MappedAttribute.Nature.BASIC;
+		this.readFragement = attribute != null && isBasicAttribute ? ( (BasicAttribute) attribute ).getCustomReadFragment() : null;
+		this.writeFragement = attribute != null && isBasicAttribute ? ( (BasicAttribute) attribute ).getCustomWriteFragment() : null;
+		this.checkCondition = attribute != null ? attribute.getCheckCondition() : null;
 		this.columnValues = columnValues;
 	}
 
@@ -54,7 +65,9 @@ public class ColumnSourceImpl implements ColumnSource {
 
 	@Override
 	public TruthValue isNullable() {
-		if(columnValues == null) return null;
+		if ( columnValues == null ) {
+			return null;
+		}
 		return columnValues.isNullable() ? TruthValue.TRUE : TruthValue.FALSE;
 	}
 
@@ -65,7 +78,9 @@ public class ColumnSourceImpl implements ColumnSource {
 
 	@Override
 	public String getSqlType() {
-		if(columnValues == null) return null;
+		if ( columnValues == null ) {
+			return null;
+		}
 		return columnValues.getColumnDefinition();
 	}
 
@@ -76,7 +91,9 @@ public class ColumnSourceImpl implements ColumnSource {
 
 	@Override
 	public SizeSource getSizeSource() {
-		if(columnValues == null) return null;
+		if ( columnValues == null ) {
+			return null;
+		}
 		return new SizeSourceImpl(
 				columnValues.getPrecision(), columnValues.getScale(), columnValues.getLength()
 		);
@@ -94,19 +111,25 @@ public class ColumnSourceImpl implements ColumnSource {
 
 	@Override
 	public TruthValue isIncludedInInsert() {
-		if(columnValues == null) return null;
+		if ( columnValues == null ) {
+			return null;
+		}
 		return columnValues.isInsertable() ? TruthValue.TRUE : TruthValue.FALSE;
 	}
 
 	@Override
 	public TruthValue isIncludedInUpdate() {
-		if(columnValues == null) return null;
+		if ( columnValues == null ) {
+			return null;
+		}
 		return columnValues.isUpdatable() ? TruthValue.TRUE : TruthValue.FALSE;
 	}
 
 	@Override
 	public String getContainingTableName() {
-		if(columnValues == null) return null;
+		if ( columnValues == null ) {
+			return null;
+		}
 		return columnValues.getTable();
 	}
 
@@ -115,17 +138,17 @@ public class ColumnSourceImpl implements ColumnSource {
 
 	@Override
 	public String getReadFragment() {
-		return null;
+		return readFragement;
 	}
 
 	@Override
 	public String getWriteFragment() {
-		return null;
+		return writeFragement;
 	}
 
 	@Override
 	public String getCheckCondition() {
-		return null;
+		return checkCondition;
 	}
 }
 
