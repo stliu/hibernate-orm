@@ -32,6 +32,7 @@ import java.util.Set;
 
 import org.hibernate.Filter;
 import org.hibernate.UnknownProfileException;
+import org.hibernate.engine.profile.FetchProfile;
 import org.hibernate.internal.FilterImpl;
 import org.hibernate.type.Type;
 
@@ -57,6 +58,7 @@ public class LoadQueryInfluencers implements Serializable {
 	private String internalFetchProfile;
 	private final Map<String,Filter> enabledFilters;
 	private final Set<String> enabledFetchProfileNames;
+	private final Set<FetchProfile> enabledFetchProfiles = new HashSet<FetchProfile>(  );
 
 	public LoadQueryInfluencers() {
 		this( null );
@@ -167,7 +169,19 @@ public class LoadQueryInfluencers implements Serializable {
 	// fetch profile support ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	public boolean hasEnabledFetchProfiles() {
-		return !enabledFetchProfileNames.isEmpty();
+		return !enabledFetchProfileNames.isEmpty() || !enabledFetchProfiles.isEmpty();
+	}
+
+	public Set<FetchProfile> getEnabledFetchProfiles(){
+		if(enabledFetchProfileNames.isEmpty()){
+			return enabledFetchProfiles;
+		} else{
+			Set<FetchProfile> results = new HashSet<FetchProfile>( enabledFetchProfiles );
+			for(final String name : enabledFetchProfileNames){
+				results.add( sessionFactory.getFetchProfile( name ) );
+			}
+			return results;
+		}
 	}
 
 	public Set<String> getEnabledFetchProfileNames() {
@@ -193,6 +207,14 @@ public class LoadQueryInfluencers implements Serializable {
 	public void disableFetchProfile(String name) throws UnknownProfileException {
 		checkFetchProfileName( name );
 		enabledFetchProfileNames.remove( name );
+	}
+
+	public void enableFetchProfile(FetchProfile profile) {
+		enabledFetchProfiles.add( profile );
+	}
+
+	public void disableFetchProfile(FetchProfile profile) {
+		enabledFetchProfiles.remove( profile );
 	}
 
 }

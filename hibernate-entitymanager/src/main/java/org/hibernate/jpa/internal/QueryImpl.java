@@ -55,6 +55,8 @@ import org.hibernate.hql.internal.QueryExecutionRequestException;
 import org.hibernate.internal.SQLQueryImpl;
 import org.hibernate.jpa.AvailableSettings;
 import org.hibernate.jpa.HibernateQuery;
+import org.hibernate.jpa.graph.internal.EntityGraphImpl;
+import org.hibernate.jpa.graph.internal.advisor.AdviceStyle;
 import org.hibernate.jpa.internal.util.ConfigurationHelper;
 import org.hibernate.jpa.internal.util.LockModeTypeHelper;
 import org.hibernate.jpa.spi.AbstractEntityManagerImpl;
@@ -75,7 +77,7 @@ import static javax.persistence.TemporalType.TIMESTAMP;
  * @author Emmanuel Bernard
  * @author Steve Ebersole
  */
-public class QueryImpl<X> extends AbstractQueryImpl<X> implements TypedQuery<X>, HibernateQuery, org.hibernate.ejb.HibernateQuery {
+public class QueryImpl<X> extends AbstractQueryImpl<X> implements org.hibernate.ejb.HibernateQuery {
 
     public static final EntityManagerMessageLogger LOG = Logger.getMessageLogger(EntityManagerMessageLogger.class, QueryImpl.class.getName());
 
@@ -168,6 +170,13 @@ public class QueryImpl<X> extends AbstractQueryImpl<X> implements TypedQuery<X>,
 		else
 			return java.util.Date.class.isAssignableFrom( javaType )
 					&& !CompositeCustomType.class.isAssignableFrom( expectedType.getClass() );
+	}
+
+	@Override
+	protected boolean applyEntityGraph(
+			EntityGraphImpl value, AdviceStyle load) {
+		//TODO
+		return false;
 	}
 
 	private static class ParameterRegistrationImpl<T> implements ParameterRegistration<T> {

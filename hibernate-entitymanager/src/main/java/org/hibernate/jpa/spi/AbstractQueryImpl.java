@@ -113,6 +113,8 @@ public abstract class AbstractQueryImpl<X> extends BaseQueryImpl implements Type
 		return QueryHints.getDefinedHints();
 	}
 
+
+
 	private javax.persistence.LockModeType jpaLockMode = javax.persistence.LockModeType.NONE;
 
 	@Override

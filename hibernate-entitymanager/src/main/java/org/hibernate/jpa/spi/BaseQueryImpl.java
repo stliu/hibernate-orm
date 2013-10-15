@@ -47,6 +47,8 @@ import org.hibernate.LockMode;
 import org.hibernate.QueryParameterException;
 import org.hibernate.jpa.AvailableSettings;
 import org.hibernate.jpa.QueryHints;
+import org.hibernate.jpa.graph.internal.EntityGraphImpl;
+import org.hibernate.jpa.graph.internal.advisor.AdviceStyle;
 import org.hibernate.jpa.internal.EntityManagerMessageLogger;
 import org.hibernate.jpa.internal.util.CacheModeHelper;
 import org.hibernate.jpa.internal.util.ConfigurationHelper;
@@ -375,6 +377,12 @@ public abstract class BaseQueryImpl implements Query {
 					applied = false;
 				}
 			}
+			else if ( AvailableSettings.LOAD_GRAPH.equals( hintName ) ) {
+				applied = applyEntityGraph( (EntityGraphImpl)value, AdviceStyle.LOAD );
+			}
+			else if ( AvailableSettings.FETCH_GRAPH.equals( hintName ) ) {
+				applied = applyEntityGraph( (EntityGraphImpl)value, AdviceStyle.LOAD );
+			}
 			else {
 				LOG.ignoringUnrecognizedQueryHint( hintName );
 			}
@@ -395,6 +403,8 @@ public abstract class BaseQueryImpl implements Query {
 
 		return this;
 	}
+
+	protected abstract boolean applyEntityGraph(EntityGraphImpl value, AdviceStyle load);
 
 	/**
 	 * Is the query represented here a native SQL query?

@@ -93,6 +93,7 @@ import org.hibernate.dialect.lock.LockingStrategyException;
 import org.hibernate.dialect.lock.OptimisticEntityLockException;
 import org.hibernate.dialect.lock.PessimisticEntityLockException;
 import org.hibernate.engine.ResultSetMappingDefinition;
+import org.hibernate.engine.profile.FetchProfile;
 import org.hibernate.engine.query.spi.HQLQueryPlan;
 import org.hibernate.engine.query.spi.sql.NativeSQLQueryConstructorReturn;
 import org.hibernate.engine.query.spi.sql.NativeSQLQueryReturn;
@@ -118,6 +119,9 @@ import org.hibernate.jpa.criteria.ValueHandlerFactory;
 import org.hibernate.jpa.criteria.compile.CompilableCriteria;
 import org.hibernate.jpa.criteria.compile.CriteriaCompiler;
 import org.hibernate.jpa.criteria.expression.CompoundSelectionImpl;
+import org.hibernate.jpa.graph.internal.EntityGraphImpl;
+import org.hibernate.jpa.graph.internal.advisor.AdviceStyle;
+import org.hibernate.jpa.graph.internal.advisor.FetchProfileBuilder;
 import org.hibernate.jpa.internal.EntityManagerFactoryImpl;
 import org.hibernate.jpa.internal.EntityManagerMessageLogger;
 import org.hibernate.jpa.internal.QueryImpl;
@@ -1097,8 +1101,13 @@ public abstract class AbstractEntityManagerImpl implements HibernateEntityManage
 		CacheMode previousCacheMode = session.getCacheMode();
 		CacheMode cacheMode = determineAppropriateLocalCacheMode( properties );
 		LockOptions lockOptions = null;
+		FetchProfile fetchProfile = null;
 		try {
 			session.setCacheMode( cacheMode );
+			fetchProfile = buildFetchProfile( properties );
+			if ( fetchProfile != null ) {
+				((SessionImplementor) session).getLoadQueryInfluencers().enableFetchProfile( fetchProfile );
+			}
 			if ( lockModeType != null ) {
 				lockOptions = getLockRequest( lockModeType, properties );
 				if ( !LockModeType.NONE.equals( lockModeType) ) {
@@ -1145,7 +1154,29 @@ public abstract class AbstractEntityManagerImpl implements HibernateEntityManage
 		}
 		finally {
 			session.setCacheMode( previousCacheMode );
+			if ( fetchProfile != null ) {
+				((SessionImplementor) session).getLoadQueryInfluencers().disableFetchProfile( fetchProfile );
+			}
 		}
+	}
+
+	private FetchProfile buildFetchProfile(Map<String, Object> properties) {
+		if ( CollectionHelper.isEmpty( properties ) ) {
+			return null;
+		}
+		if ( properties.containsKey( AvailableSettings.FETCH_GRAPH ) ) {
+			return FetchProfileBuilder.build(
+					(EntityGraphImpl) properties.get( AvailableSettings.FETCH_GRAPH ),
+					AdviceStyle.FETCH
+			);
+		}
+		else if ( properties.containsKey( AvailableSettings.LOAD_GRAPH ) ) {
+			return FetchProfileBuilder.build(
+					(EntityGraphImpl) properties.get( AvailableSettings.LOAD_GRAPH ),
+					AdviceStyle.LOAD
+			);
+		}
+		return null;
 	}
 
 	public CacheMode determineAppropriateLocalCacheMode(Map<String, Object> localProperties) {

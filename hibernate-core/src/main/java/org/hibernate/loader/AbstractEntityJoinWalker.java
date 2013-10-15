@@ -31,6 +31,7 @@ import java.util.List;
 import org.hibernate.FetchMode;
 import org.hibernate.LockOptions;
 import org.hibernate.MappingException;
+import org.hibernate.engine.FetchStyle;
 import org.hibernate.engine.profile.Fetch;
 import org.hibernate.engine.profile.FetchProfile;
 import org.hibernate.engine.spi.CascadeStyle;
@@ -38,6 +39,7 @@ import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.persister.entity.Loadable;
 import org.hibernate.persister.entity.OuterJoinLoadable;
+import org.hibernate.persister.walking.internal.FetchStrategyHelper;
 import org.hibernate.sql.JoinFragment;
 import org.hibernate.sql.Select;
 import org.hibernate.type.AssociationType;
@@ -157,29 +159,16 @@ public abstract class AbstractEntityJoinWalker extends JoinWalker {
 		return isJoinedFetchEnabledInMapping( config, type );
 	}
 
-	protected final boolean isJoinFetchEnabledByProfile(OuterJoinLoadable persister, PropertyPath path, int propertyNumber) {
-		if ( !getLoadQueryInfluencers().hasEnabledFetchProfiles() ) {
-			// perf optimization
-			return false;
-		}
-
-		// ugh, this stuff has to be made easier...
-		final String fullPath = path.getFullPath();
-		String rootPropertyName = persister.getSubclassPropertyName( propertyNumber );
-		int pos = fullPath.lastIndexOf( rootPropertyName );
-		String relativePropertyPath = pos >= 0
-				? fullPath.substring( pos )
-				: rootPropertyName;
-		String fetchRole = persister.getEntityName() + "." + relativePropertyPath;
-
-		for ( String profileName : getLoadQueryInfluencers().getEnabledFetchProfileNames() ) {
-			final FetchProfile profile = getFactory().getFetchProfile( profileName );
-			final Fetch fetch = profile.getFetchByRole( fetchRole );
-			if ( fetch != null && Fetch.Style.JOIN == fetch.getStyle() ) {
-				return true;
-			}
-		}
-		return false;
+	protected final boolean isJoinFetchEnabledByProfile(
+			OuterJoinLoadable persister,
+			PropertyPath path,
+			int propertyNumber) {
+		return FetchStyle.JOIN == FetchStrategyHelper.determineFetchStyleByProfile(
+				getLoadQueryInfluencers(),
+				persister,
+				path,
+				propertyNumber
+		);
 	}
 
 	public abstract String getComment();
