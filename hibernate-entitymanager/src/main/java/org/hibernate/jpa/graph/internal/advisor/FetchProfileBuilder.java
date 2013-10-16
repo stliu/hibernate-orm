@@ -24,13 +24,34 @@
 
 package org.hibernate.jpa.graph.internal.advisor;
 
+import java.util.Map;
+
 import org.hibernate.engine.profile.FetchProfile;
+import org.hibernate.internal.util.collections.CollectionHelper;
+import org.hibernate.jpa.AvailableSettings;
 import org.hibernate.jpa.graph.internal.EntityGraphImpl;
 
 /**
  * @author Strong Liu
  */
 public class FetchProfileBuilder {
+	public static FetchProfile build(Map<String, Object> hints){
+		if ( CollectionHelper.isEmpty( hints ) ) {
+			return null;
+		}
+		if ( hints.containsKey( AvailableSettings.FETCH_GRAPH ) ) {
+			return build(
+					(EntityGraphImpl) hints.get( AvailableSettings.FETCH_GRAPH ), AdviceStyle.FETCH
+			);
+		}
+		else if ( hints.containsKey( AvailableSettings.LOAD_GRAPH ) ) {
+			return build(
+					(EntityGraphImpl) hints.get( AvailableSettings.LOAD_GRAPH ), AdviceStyle.LOAD
+			);
+		}
+		return null;
+	}
+
 	public static FetchProfile build(EntityGraphImpl graph, AdviceStyle style) {
 		EntityGraphVisitationStrategy strategy = null;
 		switch ( style ) {
@@ -40,7 +61,8 @@ public class FetchProfileBuilder {
 			case LOAD:
 				strategy = new LoadEntityGraphVisitationStrategy();
 		}
-		new EntityGraphWalker( strategy ).visit( graph );
+		EntityGraphWalker.visit( strategy, graph );
 		return strategy.buildFetchProfile();
 	}
+
 }

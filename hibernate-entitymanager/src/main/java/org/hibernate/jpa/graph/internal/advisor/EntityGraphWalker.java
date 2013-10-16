@@ -23,9 +23,14 @@
  */
 package org.hibernate.jpa.graph.internal.advisor;
 
+import java.util.List;
+import java.util.Map;
+import javax.persistence.AttributeNode;
 import javax.persistence.Subgraph;
 
+import org.hibernate.jpa.graph.internal.AbstractGraphNode;
 import org.hibernate.jpa.graph.internal.EntityGraphImpl;
+import org.hibernate.jpa.graph.internal.SubgraphImpl;
 import org.hibernate.jpa.graph.spi.AttributeNodeImplementor;
 
 /**
@@ -39,18 +44,58 @@ public class EntityGraphWalker {
 		this.strategy = strategy;
 	}
 
-	public <T> void visit(EntityGraphImpl<T> entityGraph) {
+
+	public static <T> void visit(EntityGraphVisitationStrategy strategy, EntityGraphImpl<T> entityGraph) {
+		strategy.start();
+		try {
+			new EntityGraphWalker( strategy ).visitEntity( entityGraph );
+		}
+		finally {
+			strategy.finish();
+		}
+
+	}
+
+	private <T> void visitEntity(final EntityGraphImpl<T> entityGraph) {
+		strategy.startingEntity( entityGraph );
+		visitAttributeNodes( entityGraph );
+		strategy.finishingEntity( entityGraph );
+
+
+	}
+
+	private <T> void visitAttributeNodes(AbstractGraphNode<T> graphNode) {
+		List<AttributeNodeImplementor<?>> nodeList = graphNode.attributeImplementorNodes();
+		for ( AttributeNode node : nodeList ) {
+			visitAttributeNode( (AttributeNodeImplementor) node );
+		}
+
 	}
 
 	private <T> void visitAttributeNode(AttributeNodeImplementor<T> attributeNode) {
+		strategy.startingAttributeNode( attributeNode );
+		Map<Class, Subgraph> subgraphMap = attributeNode.getSubgraphs();
+		for ( Map.Entry<Class, Subgraph> entry : subgraphMap.entrySet() ) {
+			visitSubgraph( entry.getKey(), (SubgraphImpl) entry.getValue() );
+		}
+		subgraphMap = attributeNode.getKeySubgraphs();
+		for ( Map.Entry<Class, Subgraph> entry : subgraphMap.entrySet() ) {
+			visitKeySubgraph( entry.getKey(), (SubgraphImpl) entry.getValue() );
+		}
+		strategy.finishingAttributeNode( attributeNode );
 
 	}
 
-	private void visitSubgraph(Subgraph subgraph) {
+	private <T> void visitSubgraph(Class clazz, SubgraphImpl<T> subgraph) {
+		strategy.startingSubGraph( clazz, subgraph );
+		visitAttributeNodes( subgraph );
+		strategy.finishingSubGraph( clazz, subgraph );
 
 	}
 
-	private void visitKeySubgraph(Subgraph subgraph) {
-
+	private <T> void visitKeySubgraph(Class clazz, SubgraphImpl<T> subgraph) {
+		strategy.startingKeySubGraph( clazz, subgraph );
+		visitAttributeNodes( subgraph );
+		strategy.finishingKeySubGraph( clazz, subgraph );
 	}
 }

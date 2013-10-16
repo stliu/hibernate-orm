@@ -1104,7 +1104,7 @@ public abstract class AbstractEntityManagerImpl implements HibernateEntityManage
 		FetchProfile fetchProfile = null;
 		try {
 			session.setCacheMode( cacheMode );
-			fetchProfile = buildFetchProfile( properties );
+			fetchProfile = FetchProfileBuilder.build( properties );
 			if ( fetchProfile != null ) {
 				((SessionImplementor) session).getLoadQueryInfluencers().enableFetchProfile( fetchProfile );
 			}
@@ -1158,25 +1158,6 @@ public abstract class AbstractEntityManagerImpl implements HibernateEntityManage
 				((SessionImplementor) session).getLoadQueryInfluencers().disableFetchProfile( fetchProfile );
 			}
 		}
-	}
-
-	private FetchProfile buildFetchProfile(Map<String, Object> properties) {
-		if ( CollectionHelper.isEmpty( properties ) ) {
-			return null;
-		}
-		if ( properties.containsKey( AvailableSettings.FETCH_GRAPH ) ) {
-			return FetchProfileBuilder.build(
-					(EntityGraphImpl) properties.get( AvailableSettings.FETCH_GRAPH ),
-					AdviceStyle.FETCH
-			);
-		}
-		else if ( properties.containsKey( AvailableSettings.LOAD_GRAPH ) ) {
-			return FetchProfileBuilder.build(
-					(EntityGraphImpl) properties.get( AvailableSettings.LOAD_GRAPH ),
-					AdviceStyle.LOAD
-			);
-		}
-		return null;
 	}
 
 	public CacheMode determineAppropriateLocalCacheMode(Map<String, Object> localProperties) {
