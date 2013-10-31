@@ -218,7 +218,12 @@ public abstract class AbstractEntityGraphVisitationStrategy
 			final AssociationAttributeDefinition attributeDefinition);
 
 	protected FetchStrategy adjustJoinFetchIfNeeded(
-			AssociationAttributeDefinition attributeDefinition, FetchStrategy fetchStrategy) {
+			AssociationAttributeDefinition attributeDefinition,
+			FetchStrategy fetchStrategy) {
+		if ( lockMode.greaterThan( LockMode.READ ) ) {
+			return new FetchStrategy( fetchStrategy.getTiming(), FetchStyle.SELECT );
+		}
+
 		final Integer maxFetchDepth = sessionFactory().getSettings().getMaximumFetchDepth();
 		if ( maxFetchDepth != null && currentDepth() > maxFetchDepth ) {
 			return new FetchStrategy( fetchStrategy.getTiming(), FetchStyle.SELECT );
@@ -231,6 +236,7 @@ public abstract class AbstractEntityGraphVisitationStrategy
 
 		return fetchStrategy;
 	}
+
 
 	@Override
 	public LoadPlan buildLoadPlan() {
