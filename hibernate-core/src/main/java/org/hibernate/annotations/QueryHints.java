@@ -23,10 +23,13 @@
  */
 package org.hibernate.annotations;
 
+import javax.persistence.*;
+
 /**
  * Consolidation of hints available to Hibernate JPA queries.  Mainly used to define features available on
  * Hibernate queries that have no corollary in JPA queries.
  */
+@javax.persistence.NamedQuery( name = "", query = "", hints = @QueryHint( name = QueryHints.CACHE_MODE, value = "sdfds"))
 public class QueryHints {
 	/**
 	 * Disallow instantiation.

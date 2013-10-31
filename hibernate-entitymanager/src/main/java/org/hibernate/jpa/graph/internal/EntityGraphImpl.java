@@ -24,7 +24,6 @@
 package org.hibernate.jpa.graph.internal;
 
 import javax.persistence.AttributeNode;
-import javax.persistence.EntityGraph;
 import javax.persistence.Subgraph;
 import javax.persistence.metamodel.Attribute;
 import javax.persistence.metamodel.EntityType;
@@ -32,6 +31,7 @@ import javax.persistence.metamodel.IdentifiableType;
 import java.util.List;
 
 import org.hibernate.cfg.NotYetImplementedException;
+import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.jpa.HibernateEntityManagerFactory;
 
 /**
@@ -39,7 +39,7 @@ import org.hibernate.jpa.HibernateEntityManagerFactory;
  *
  * @author Steve Ebersole
  */
-public class EntityGraphImpl<T> extends AbstractGraphNode<T> implements EntityGraph<T> {
+public class EntityGraphImpl<T> extends AbstractGraphNode<T> implements EntityGraphImplementor<T> {
 	private final String name;
 	private final EntityType<T> entityType;
 
@@ -150,7 +150,7 @@ public class EntityGraphImpl<T> extends AbstractGraphNode<T> implements EntityGr
 
 	@SuppressWarnings("unchecked")
 	public boolean appliesTo(String entityName) {
-		return appliesTo( entityManagerFactory().getEntityTypeByName( entityName ) );
+		return appliesTo( getFactory().getEntityTypeByName( entityName ) );
 	}
 
 	public boolean appliesTo(EntityType<? super T> entityType) {

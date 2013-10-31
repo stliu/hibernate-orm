@@ -26,6 +26,7 @@ package org.hibernate.jpa.spi;
 import javax.persistence.CacheRetrieveMode;
 import javax.persistence.CacheStoreMode;
 import javax.persistence.EntityExistsException;
+import javax.persistence.EntityGraph;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.EntityTransaction;
@@ -109,6 +110,7 @@ import org.hibernate.engine.transaction.synchronization.spi.AfterCompletionActio
 import org.hibernate.engine.transaction.synchronization.spi.ExceptionMapper;
 import org.hibernate.engine.transaction.synchronization.spi.ManagedFlushChecker;
 import org.hibernate.engine.transaction.synchronization.spi.SynchronizationCallbackCoordinator;
+import org.hibernate.graph.spi.EntityGraphImplementor;
 import org.hibernate.internal.util.ReflectHelper;
 import org.hibernate.internal.util.collections.CollectionHelper;
 import org.hibernate.jpa.AvailableSettings;
@@ -1098,6 +1100,9 @@ public abstract class AbstractEntityManagerImpl implements HibernateEntityManage
 		CacheMode cacheMode = determineAppropriateLocalCacheMode( properties );
 		LockOptions lockOptions = null;
 		try {
+			((SessionImplementor)session).getLoadQueryInfluencers().setFetchGraph( (EntityGraphImplementor)properties.get( QueryHints.HINT_FETCHGRAPH ) );
+			((SessionImplementor)session).getLoadQueryInfluencers().setLoadGraph( (EntityGraphImplementor)properties.get( QueryHints.HINT_LOADGRAPH ) );
+
 			session.setCacheMode( cacheMode );
 			if ( lockModeType != null ) {
 				lockOptions = getLockRequest( lockModeType, properties );
@@ -1145,6 +1150,9 @@ public abstract class AbstractEntityManagerImpl implements HibernateEntityManage
 		}
 		finally {
 			session.setCacheMode( previousCacheMode );
+			((SessionImplementor)session).getLoadQueryInfluencers().setFetchGraph( null );
+			((SessionImplementor)session).getLoadQueryInfluencers().setLoadGraph( null );
+
 		}
 	}
 

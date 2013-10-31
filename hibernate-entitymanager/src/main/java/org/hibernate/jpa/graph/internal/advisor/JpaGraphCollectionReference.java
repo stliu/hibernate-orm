@@ -23,7 +23,7 @@
  */
 package org.hibernate.jpa.graph.internal.advisor;
 
-import org.hibernate.jpa.graph.spi.AttributeNodeImplementor;
+import org.hibernate.graph.spi.AttributeNodeImplementor;
 import org.hibernate.loader.plan.spi.FetchOwner;
 
 /**
