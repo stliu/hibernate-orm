@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+import org.hibernate.LockMode;
 import org.hibernate.SessionFactory;
 import org.hibernate.engine.spi.LoadQueryInfluencers;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -127,7 +128,7 @@ public class EntityGraphLoadPlanBuilderTest extends BaseEntityManagerFunctionalT
 		loadQueryInfluencers.setFetchGraph( entityGraph );
 		EntityPersister ep = (EntityPersister) sfi().getClassMetadata( Cat.class );
 		AbstractLoadPlanBuildingAssociationVisitationStrategy strategy = new FetchGraphLoadPlanBuildingStrategy(
-				sfi(), loadQueryInfluencers
+				sfi(), loadQueryInfluencers, LockMode.NONE
 		);
 		return MetamodelDrivenLoadPlanBuilder.buildRootEntityLoadPlan( strategy, ep );
 	}
