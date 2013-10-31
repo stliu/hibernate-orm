@@ -1100,9 +1100,12 @@ public abstract class AbstractEntityManagerImpl implements HibernateEntityManage
 		CacheMode cacheMode = determineAppropriateLocalCacheMode( properties );
 		LockOptions lockOptions = null;
 		try {
-			((SessionImplementor)session).getLoadQueryInfluencers().setFetchGraph( (EntityGraphImplementor)properties.get( QueryHints.HINT_FETCHGRAPH ) );
-			((SessionImplementor)session).getLoadQueryInfluencers().setLoadGraph( (EntityGraphImplementor)properties.get( QueryHints.HINT_LOADGRAPH ) );
-
+			if ( properties != null && !properties.isEmpty() ) {
+				( (SessionImplementor) session ).getLoadQueryInfluencers()
+						.setFetchGraph( (EntityGraphImplementor) properties.get( QueryHints.HINT_FETCHGRAPH ) );
+				( (SessionImplementor) session ).getLoadQueryInfluencers()
+						.setLoadGraph( (EntityGraphImplementor) properties.get( QueryHints.HINT_LOADGRAPH ) );
+			}
 			session.setCacheMode( cacheMode );
 			if ( lockModeType != null ) {
 				lockOptions = getLockRequest( lockModeType, properties );
